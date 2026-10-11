@@ -260,12 +260,21 @@ export const Units = {
         const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
         const data = window.tags[fullID] ?? window.tags[unitID] ?? [ ];
 
+        let result;
         if (!variant)
-            return data.flat().filter((x, n, a) => a.indexOf(x) === n);
+            result = data.flat().filter((x, n, a) => a.indexOf(x) === n);
         else if (data.some(d => isArray(d)))
-            return (data[variant - 1] as string[]) ?? [ ];
+            result = (data[variant - 1] as string[]) ?? [ ];
         else
-            return (data as string[]) ?? [ ];
+            result = (data as string[]) ?? [ ];
+
+        return result
+            .map(t => t.replace(/^Former\s*\/\s*/, ''))
+            .map(t => t.endsWith('/ Devil Fruit User') ? t.match(/(.+?)\s*\/\s*(Devil Fruit User)$/)?.slice(1) ?? t : t)
+            .flat()
+            .map(t => t.trim())
+            .filter(t => !isNullish(t))
+            .filter((x,n,a) => a.indexOf(x) === n);
 
     },
 
@@ -308,8 +317,6 @@ export const Units = {
     }
 
 }
-
-window.Units = Units;
 
 /*---------
   Internals
