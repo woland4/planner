@@ -19,7 +19,7 @@
       Constants
       ---------*/
 
-    const targetItems = [
+    const TARGET_ITEMS = [
         ...Enums.types,
         { type: 'separator' },
         ...Enums.classes,
@@ -29,7 +29,11 @@
         ...values(Enums.tags).flat()
     ].map((v: any) => v.type ? v : ({ value: v, label: I18N.position(v as Position) ?? v }));
 
-    const typeOptions = sortBy<GimmickEffectType[]>(Enums.gimmickTypes, (t) => getTypeLabel(t));
+    const INTIMIDATION_ITEMS = Enums.intimidations.map(value => ({ value, label: I18N.intimidation(value) }));
+
+    const INTERRUPTION_ITEMS = Enums.interruptions.map(value => ({ value, label: I18N.interruption(value) }));
+
+    const TYPE_OPTIONS = sortBy<GimmickEffectType[]>(Enums.gimmickTypes, (t) => getTypeLabel(t));
 
     /*-------
       Options
@@ -140,7 +144,7 @@
                                label="Interruption Triggers"
                                required>
                     <UInputMenu v-model="model.triggers"
-                                :items="Enums.interruptions.map(value => ({ value, label: I18N.interruption(value) }))"
+                                :items="INTERRUPTION_ITEMS"
                                 :color="!model.triggers?.length ? 'error' : 'primary'"
                                 :highlight="!model.triggers?.length"
                                 :ui="{ root: 'max-md:w-full!' }"
@@ -174,7 +178,7 @@
                                  :class="{ 'border-red-500': !model.type, 'max-md:w-full': true }"
                                  placeholder="Type"
                                  @update:model-value="onTypeUpdated">
-                        <option v-for="type in typeOptions"
+                        <option v-for="type in TYPE_OPTIONS"
                                 :key="type"
                                 :value="type">
                             {{ getTypeLabel(type) ?? type }}
@@ -273,7 +277,7 @@
 
                             <UInputMenu v-else-if="data.type === 'intimidation'"
                                         v-model="draft[key]"
-                                        :items="Enums.intimidations.map(value => ({ value, label: I18N.intimidation(value) }))"
+                                        :items="INTIMIDATION_ITEMS"
                                         :color="data.required && !draft[key] ? 'error' : 'primary'"
                                         :highlight="!!data.required && !draft[key]"
                                         :disabled="isDisabled(key)"
@@ -372,7 +376,7 @@
 
                             <UInputMenu v-else-if="data.type === 'targets'"
                                         v-model="draft[key]"
-                                        :items="targetItems"
+                                        :items="TARGET_ITEMS"
                                         :color="data.required && !draft[key] ? 'error' : 'primary'"
                                         :highlight="!!data.required && !draft[key]"
                                         :disabled="isDisabled(key)"

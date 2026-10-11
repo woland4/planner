@@ -50,6 +50,11 @@
         if (!data.value) return [ ];
         return data.value.lines?.(props.gimmick).filter(t => !isNullish(t)) ?? [ ];
     });
+
+    const triggers = computed<Nullable<string>>(() => {
+        if (!props.gimmick.triggers?.length) return null;
+        return props.gimmick.triggers.map(t => I18N.interruption(t)).join('/');
+    });
 </script>
 
 <template>
@@ -64,12 +69,12 @@
             <template v-if="props.gimmick.activation === 'interruption'">
 
                 <template v-if="props.gimmick.triggers?.length && props.gimmick.times && props.gimmick.times < 99">
-                    {{ props.gimmick.triggers.map(t => I18N.interruption(t)).join('/') }},
+                    {{ triggers }},
                     {{ props.gimmick.times }} time{{ props.gimmick.times === 1 ? '' : 's' }} &#x2192;
                 </template>
 
                 <template v-else-if="props.gimmick.triggers?.length">
-                    {{ props.gimmick.triggers.map(t => I18N.interruption(t)).join('/') }} &#x2192;
+                    {{ triggers }} &#x2192;
                 </template>
 
             </template>
