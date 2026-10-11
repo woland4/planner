@@ -1,6 +1,7 @@
 <script setup lang="ts">
     import { computed } from 'vue';
     import { useStorage } from '@vueuse/core';
+    import { useOverlay, useToast } from '@nuxt/ui/composables';
 
     import TeamLoadingModal from '@/modals/TeamLoadingModal.vue';
     import TeamPicker from '@/components/TeamPicker.vue';
