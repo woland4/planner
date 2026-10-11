@@ -4,10 +4,22 @@
 
     import GimmickViewer from '@/components/viewer/GimmickViewer.vue';
 
+    import { I18N } from '@/utils/i18n.ts';
+
     import type { Battle } from '@/types/battles.ts';
     import type { Gimmick } from '@/types/gimmicks.ts';
     import type { Activation } from '@/types/enums.ts';
-    import { I18N } from '@/utils/i18n.ts';
+
+    /*---------
+      Constants
+      ---------*/
+
+    const ACTIVATIONS: { key: Activation, badge: any }[] = [
+        { key: 'preexisting', badge: 'success' },
+        { key: 'preemptive', badge: 'info' },
+        { key: 'death', badge: 'warning' },
+        { key: 'interruption', badge: 'error' }
+    ];
 
     /*-------
       Options
@@ -65,72 +77,23 @@
 
             <!-- Gimmicks -->
 
-            <template v-if="!isEmpty(gimmickGroups[n])">
-
-                <template v-if="gimmickGroups[n].preexisting">
+            <template v-for="activation in ACTIVATIONS"
+                      :key="activation.key">
+                <template v-if="gimmickGroups[n]?.[activation.key]?.length">
 
                     <USeparator>
-                        <UBadge color="success"
+                        <UBadge :color="activation.badge"
                                 size="sm"
                                 class="font-bold py-0.5 uppercase">
-                            {{ I18N.activation('preexisting') }}
+                            {{ I18N.activation(activation.key) }}
                         </UBadge>
                     </USeparator>
 
-                    <GimmickViewer v-for="(gimmick,m) in gimmickGroups[n].preexisting"
+                    <GimmickViewer v-for="(gimmick,m) in gimmickGroups[n][activation.key]"
                                    :key="m"
                                    :gimmick="gimmick" />
 
                 </template>
-
-                <template v-if="gimmickGroups[n].preemptive">
-
-                    <USeparator>
-                        <UBadge color="info"
-                                size="sm"
-                                class="font-bold py-0.5 uppercase">
-                            {{ I18N.activation('preemptive') }}
-                        </UBadge>
-                    </USeparator>
-
-                    <GimmickViewer v-for="(gimmick,m) in gimmickGroups[n].preemptive"
-                                   :key="m"
-                                   :gimmick="gimmick" />
-
-                </template>
-
-                <template v-if="gimmickGroups[n].death">
-
-                    <USeparator>
-                        <UBadge color="warning"
-                                size="sm"
-                                class="font-bold py-0.5 uppercase">
-                            {{ I18N.activation('death') }}
-                        </UBadge>
-                    </USeparator>
-
-                    <GimmickViewer v-for="(gimmick,m) in gimmickGroups[n].death"
-                                   :key="m"
-                                   :gimmick="gimmick" />
-
-                </template>
-
-                <template v-if="gimmickGroups[n].interruption">
-
-                    <USeparator>
-                        <UBadge color="error"
-                                size="sm"
-                                class="font-bold py-0.5 uppercase">
-                            {{ I18N.activation('interruption') }}
-                        </UBadge>
-                    </USeparator>
-
-                    <GimmickViewer v-for="(gimmick,m) in gimmickGroups[n].interruption"
-                                   :key="m"
-                                   :gimmick="gimmick" />
-
-                </template>
-
             </template>
 
         </UCard>

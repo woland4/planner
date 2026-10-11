@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { useOverlay } from '@nuxt/ui/composables';
+    import { useOverlay, useToast } from '@nuxt/ui/composables';
 
     import StageViewer from '@/components/viewer/StageViewer.vue';
     import BattleEditingModal from '@/modals/BattleEditingModal.vue';
@@ -11,11 +11,31 @@
     import { Battles } from '@/utils/battles.ts';
     import { Ui } from '@/utils/ui.ts';
 
+    /*---------
+      Constants
+      ---------*/
+
+    const EXPORT_ITEMS = [
+        [
+            {
+                label: 'Export battle',
+                icon: 'i-lucide-layout-list',
+                onSelect: onExportBattle
+            },
+            {
+                label: 'Export boosters',
+                icon: 'i-lucide-users',
+                onSelect: onExportBoosters
+            }
+        ]
+    ];
+
     /*-----------
       Injectables
       -----------*/
 
     const overlay = useOverlay();
+    const toast = useToast();
 
     const store = useStore();
     const responsiveness = useResponsiveness();
@@ -66,6 +86,56 @@
         a.download = `${ store.currentTab?.name ?? 'battle' }.json`;
         a.click();
         URL.revokeObjectURL(url);
+
+    }
+
+    async function onExportBattle() {
+
+        const battle = store.currentTab?.battle;
+        if (!battle?.stages?.length) {
+            toast.add({
+                icon: 'i-lucide-circle-alert',
+                title: 'Nothing to export.',
+                color: 'warning',
+                duration: 2000
+            });
+            return;
+        }
+
+        const blob = await Export.battleScreenshot(battle/*, store.currentTab?.name*/);
+        await navigator.clipboard.write([ new ClipboardItem({ 'image/png': blob }) ]);
+
+        toast.add({
+            icon: 'i-ri-screenshot-2-line',
+            title: 'Copied to clipboard.',
+            color: 'success',
+            duration: 2000
+        });
+
+    }
+
+    async function onExportBoosters() {
+
+        const boosters = store.currentTab?.battle?.boosters;
+        if (!boosters?.some(b => b.ids?.length)) {
+            toast.add({
+                icon: 'i-lucide-circle-alert',
+                title: 'Nothing to export.',
+                color: 'warning',
+                duration: 2000
+            });
+            return;
+        }
+
+        const blob = await Export.boostersScreenshot(boosters);
+        await navigator.clipboard.write([ new ClipboardItem({ 'image/png': blob }) ]);
+
+        toast.add({
+            icon: 'i-ri-screenshot-2-line',
+            title: 'Copied to clipboard.',
+            color: 'success',
+            duration: 2000
+        });
 
     }
 </script>
@@ -121,6 +191,20 @@
                              class="cursor-pointer"
                              @click="onExportToJSON" />
                 </UTooltip>
+
+                <UDropdownMenu :items="EXPORT_ITEMS"
+                               :content="{ onCloseAutoFocus: (e: Event) => e.preventDefault() }">
+
+                    <UTooltip :content="{ side: 'bottom' }"
+                              :delay-duration="0"
+                              text="Generate screenshot">
+                        <UButton color="neutral"
+                                 variant="subtle"
+                                 icon="i-lucide-camera"
+                                 class="cursor-pointer" />
+                    </UTooltip>
+
+                </UDropdownMenu>
 
             </div>
         </template>
