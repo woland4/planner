@@ -1,0 +1,14 @@
+@import "tailwindcss";
+@import "@nuxt/ui";
+@import "animate.css";
+
+:root {
+
+    --header-height-desktop: 3rem;
+    --header-height-mobile: 3.5rem;
+
+    --tabbar-height-desktop: 2.5rem;
+
+    --sidebar-left-width-desktop: 25rem;
+
+}

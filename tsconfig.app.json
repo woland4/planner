@@ -1,0 +1,26 @@
+{
+
+    "extends": "@vue/tsconfig/tsconfig.dom.json",
+
+    "compilerOptions": {
+
+        "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.app.tsbuildinfo",
+        "types": [ "vite/client" ],
+
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "erasableSyntaxOnly": true,
+        "noFallthroughCasesInSwitch": true,
+
+        "paths": {
+            "@/*": [ "./src/*" ],
+            "#build/ui/*": [
+                "./node_modules/.nuxt-ui/ui/*"
+            ]
+        }
+
+    },
+
+    "include": [ "src/**/*.ts", "src/**/*.vue", "auto-imports.d.ts", "components.d.ts" ],
+
+}

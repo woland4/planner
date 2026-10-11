@@ -1,0 +1,164 @@
+@use "sass:math";
+
+/* Crew */
+
+$crew: (
+    attackDown: 0,
+    attackDownAboveChain: 1,
+    attackDownBelowChain: 2,
+    attackUp: 3,
+    bind: 4,
+    bleed: 5,
+    blindness: 6,
+    blowAway: 7,
+    burn: 8,
+    burnImmediate: 9,
+    chainGrowthDown: 10,
+    chainLock: 11,
+    despair: 12,
+    healDamage: 13,
+    hunger: 14,
+    lockSlots: 15,
+    nao: 16,
+    noPotentialAbilities: 17,
+    noRcv: 18,
+    pain: 19,
+    paralysis: 20,
+    poison: 21,
+    rcvDamage: 22,
+    silence: 23,
+    slotBind: 24,
+    slotChange: 25,
+    slotUp: 26,
+    special: 27,
+    specialBind: 28,
+    specialLimit: 29,
+    specialReverse: 30,
+    stun: 31,
+    superSwitch: 32,
+    swap: 33,
+    unfavorableSlots: 34,
+    vs: 35,
+    increasedDamage: 36,
+    healReduction: 37,
+    haki: 38,
+    tapTimingHarder: 39,
+    tapTimingEasier: 40,
+    targetLock: 41,
+    slotMultiplierDown: 42,
+    slotMultiplierUp: 43,
+    specialLock: 44,
+    tapLimit: 45,
+    typeUp: 46
+);
+
+/* Enemy */
+
+$enemy: (
+    barrier: 0,
+    damageNullification: 1,
+    damageReduction: 2,
+    damageThreshold: 3,
+    defenseUp: 4,
+    endOfTurnDamage: 5,
+    healthCutResistance: 6,
+    immunity: 7,
+    immunityDeath: 8,
+    immunityDelay: 9,
+    immunityExcept: 10,
+    immunityPoison: 11,
+    intimidation: 12,
+    provoked: 13,
+    resilience: 14,
+    slotBarrier: 15,
+    slotDamageReduction: 16,
+    territory: 17,
+    timingBarrierGood: 18,
+    timingBarrierGreat: 19,
+    timingBarrierPerfect: 20,
+    weaknessFighter: 21,
+    weaknessSlasher: 22,
+    weaknessStriker: 23,
+    weaknessShooter: 24,
+    weaknessFreeSpirit: 25,
+    weaknessDriven: 26,
+    weaknessCerebral: 27,
+    weaknessPowerhouse: 28,
+    damageLimit: 29,
+    superTyping: 30,
+    damage: 31
+);
+
+/* Others */
+
+$others: (
+
+    str: 0,
+    dex: 1,
+    qck: 2,
+    psy: 3,
+    int: 4,
+
+    fighter: 10,
+    slasher: 11,
+    striker: 12,
+    shooter: 13,
+    freeSpirit: 14,
+    free: 14,
+    driven: 15,
+    cerebral: 16,
+    powerhouse: 17,
+
+    block: 20,
+    bomb: 21,
+    emptySlot: 22,
+    g: 23,
+    paralysisSlot: 24,
+    poisonSlot: 25,
+    rainbow: 26,
+    rcvSlot: 27,
+    semla: 28,
+    superBlock: 29,
+    superBomb: 30,
+    tndSlot: 31,
+    wano: 32
+
+);
+
+/* Styling */
+
+.optc-icon {
+
+    display: inline-block;
+    aspect-ratio: 1;
+    background-repeat: no-repeat;
+    background-size: 1000% 1000%;
+
+    @each $name, $n in $crew {
+        $row: math.floor(math.div($n, 10));
+        $column: $n % 10;
+        &.#{$name} {
+            background-image: url('../assets/icons/crew.png');
+            background-position: math.div($column, 9) * 100% math.div($row, 9) * 100%;
+        }
+    }
+
+    @each $name, $n in $enemy {
+        $row: math.floor(math.div($n, 10));
+        $column: $n % 10;
+        &.#{$name} {
+            background-image: url('../assets/icons/enemy.png');
+            background-position: math.div($column, 9) * 100% math.div($row, 9) * 100%;
+        }
+    }
+
+    @each $name, $n in $others {
+        $row: math.floor(math.div($n, 10));
+        $column: $n % 10;
+        &.#{$name} {
+            background-image: url('../assets/icons/others.png');
+            background-position: math.div($column, 9) * 100% math.div($row, 9) * 100%;
+        }
+    }
+
+}
