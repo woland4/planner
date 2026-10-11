@@ -7,17 +7,19 @@ import { useResponsiveness } from '@/utils/responsiveness.ts';
 import type { Store, Tab } from '@/types/store.ts';
 import type { Nullable } from '@/types/utils.ts';
 
-const NEW_TAB: Tab = {
-    index: -1,
-    battle: null,
-    team: { units: [ null, null, null, null, null, null ] }
+function createTab(): Tab {
+    return {
+        index: -1,
+        battle: null,
+        team: { units: [ null, null, null, null, null, null ] }
+    };
 }
 
 export const useStore = defineStore('store', {
 
     state: () => ({
 
-        tabs: useStorage<Tab[]>('tabs', [{ ...NEW_TAB, index: 0 }]),
+        tabs: useStorage<Tab[]>('tabs', [{ ...createTab(), index: 0 }]),
         currentTabIndex: useStorage<number>('currentTab', 0),
 
         leftSidebarVisible: useResponsiveness().isDesktop.value,
@@ -39,7 +41,7 @@ export const useStore = defineStore('store', {
 
         newTab() {
             this.tabs.push({
-                ...NEW_TAB,
+                ...createTab(),
                 index: this.tabs.length,
                 name: 'Untitled Tab #' + (this.tabs.length + 1)
             });
@@ -51,7 +53,7 @@ export const useStore = defineStore('store', {
             if (!this.tabs[index])
                 return;
 
-            const clonedTab = clone(this.tabs[this.currentTabIndex]);
+            const clonedTab = clone(this.tabs[index]);
             this.tabs.splice(index + 1, 0, clonedTab);
 
             for (let i=0; i<this.tabs.length; ++i)
@@ -69,9 +71,8 @@ export const useStore = defineStore('store', {
 
             const removingCurrent = this.currentTabIndex >= fromIndexInclusive && this.currentTabIndex <= toIndexInclusive;
             const currentTab = this.tabs[this.currentTabIndex];
-            const nextTab = this.tabs[this.currentTabIndex - 1] ?? this.tabs[this.currentTabIndex + 1];
 
-            this.tabs.splice(fromIndexInclusive, toIndexInclusive + 1);
+            this.tabs.splice(fromIndexInclusive, toIndexInclusive - fromIndexInclusive + 1);
 
             if (this.tabs.length <= 0) {
                 this.currentTabIndex = -1;
@@ -82,7 +83,7 @@ export const useStore = defineStore('store', {
                 this.tabs[i].index = i;
 
             if (removingCurrent)
-                this.currentTabIndex = nextTab.index;
+                this.currentTabIndex = Math.min(fromIndexInclusive, this.tabs.length - 1);
             else
                 this.currentTabIndex = currentTab?.index ?? -1;
 
@@ -94,7 +95,7 @@ export const useStore = defineStore('store', {
         },
 
         closeExcept(index: number) {
-            this.closeTabs(index + 1, this.tabs.length);
+            this.closeTabs(index + 1, this.tabs.length - 1);
             this.closeTabs(0, index - 1);
         }
 
