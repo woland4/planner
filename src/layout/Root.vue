@@ -6,6 +6,7 @@
     import Center from '@/layout/Center.vue';
 
     import UnitPopover from '@/components/UnitPopover.vue';
+    import RightSidebar from '@/layout/RightSidebar.vue';
 
     import { UnitPopovers } from '@/utils/unitPopovers.ts';
 
@@ -25,6 +26,7 @@
             <Center />
 
             <LeftSidebar />
+            <RightSidebar />
 
             <UPopover :key="UnitPopovers.currentUnit.value?.key"
                       :open="!!UnitPopovers.currentUnit.value"

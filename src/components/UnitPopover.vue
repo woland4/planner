@@ -81,7 +81,7 @@
 
     const swaps = computed<Section[]>(() => {
 
-        const data = Units.getSwaps(props.unitId);
+        const data = Units.getSwap(props.unitId);
         if (!data?.base) return [ ];
 
         const contents = prepareSwap(data);

@@ -1,6 +1,8 @@
 import { isArray, isNullish, isNumber, isPlainObject, isString, unique } from 'remeda';
 
 import type { Nullable } from '@/types/utils.ts';
+import { Criteria } from '@/utils/criteria.ts';
+import type { Class, Type } from '@/types/enums.ts';
 
 /*---------
   Constants
@@ -8,15 +10,6 @@ import type { Nullable } from '@/types/utils.ts';
 
 const IMAGE_BASE = 'https://2Shankz.github.io/optc-db.github.io';
 //const IMAGE_BASE = 'http://localhost/optc';
-
-const ALL_CHARACTERS_REGEX = /^All characters?/i;
-const TRAILING_CHARACTERS_REGEX = / characters?$/i;
-const ALIASES_REGEX = /\s+\(.*?\)/g;
-const COST_REGEX = /characters? with cost (\d+) or (less|more)/i;
-const TYPE_REGEX = /\[(STR|DEX|QCK|PSY|INT)\]/i;
-const CLASS_REGEX = /(?:Fighter|Slasher|Striker|Shooter|Free Spirit|Powerhouse|Cerebral|Driven)/i;
-const TAG_REGEX = /\[((?!STR\]|DEX\]|QCK\]|PSY\]|INT\])[^\]]+)\]/i;
-const SEPARATOR_REGEX = /(?:\s*,\s*|\s+)(?:and|or)\s+|\s*,\s*|\/|:\s*/g;
 
 const IGNORED_SUPPORT_REGEXES = [
     /reduces damage received from [^.]+ by [\d.]%\./i,
@@ -56,24 +49,7 @@ export type SuperSpecialOrSupport = {
 type DbSpecial = {
     cooldown: number[];
     description: string;
-}
-
-type SupportTarget = {
-    cost: Nullable<number>;
-    families: string[];
-    types: string[];
-    classes: string[];
-    tags: string[];
-}
-
-type SupportCriteria = {
-    cost?: { min: number, max: number };
-    families: string[];
-    types: string[];
-    classes: string[];
-    tags: string[];
-    requiresEveryClass: boolean;
-}
+};
 
 /*-------
   Exports
@@ -111,22 +87,30 @@ export const Units = {
 
     },
 
+    getCost(unitID: Nullable<number | string>,
+            variant: Nullable<number> = null): Nullable<number> {
+        if (!unitID) return null;
+        const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+        const data = window.units[fullID] ?? window.units[unitID];
+        return data?.cost ?? null;
+    },
+
     getClasses(unitID: Nullable<number | string>,
-               variant: Nullable<number> = null): string[] {
+               variant: Nullable<number> = null): Class[] {
         if (!unitID) return [ ];
         const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
         const data = window.units[fullID] ?? window.units[unitID];
         if (isString(data?.class))
-            return [ data.class ];
+            return [ data.class ] as Class[];
         else if (isArray(data?.class))
-            return data.class;
+            return data.class as Class[];
         else if (window.units[unitID + '-1']) {
             const class1 = (window.units[unitID + '-1']?.class ?? [ ]);
             const class2 = (window.units[unitID + '-2']?.class ?? [ ]);
             return unique([
                 (isArray(class1) ? class1 : [ class1 ]),
                 (isArray(class2) ? class2 : [ class2 ])
-            ].flat());
+            ].flat()) as Class[];
         } else
             return [ ];
     },
@@ -157,6 +141,7 @@ export const Units = {
         if (!unitID) return null
 
         const data = window.details[unitID];
+        if (!data) return null;
 
         if (data.superSpecial)
             return { base: data.superSpecial, criteria: data.superSpecialCriteria };
@@ -188,20 +173,23 @@ export const Units = {
     },
 
     getSupporters(supportedUnitID: Nullable<number | string>,
-                  supportedVariant: Nullable<number> = null): number[] {
+                  supportedUnitVariant: Nullable<number> = null): number[] {
 
         if (!supportedUnitID) return [ ];
 
-        const target = {
-            cost: window.units[supportedUnitID]?.cost,
-            families: Units.getFamilies(supportedUnitID, supportedVariant).map(normalizeString),
-            types: Units.getTypes(supportedUnitID, supportedVariant).map(normalizeString),
-            classes: Units.getClasses(supportedUnitID, supportedVariant).map(normalizeString),
-            tags: Units.getTags(supportedUnitID, supportedVariant).map(normalizeString)
-        };
+        return getSupporterIDs().filter(supportingUnitID => {
 
-        return getSupporterIDs()
-            .filter(id => canSupport(id, target));
+            const support = Units.getSupport(supportingUnitID);
+            if (!support?.base) return false;
+
+            const supportedFamilies = Units.getFamilies(supportedUnitID, supportedUnitVariant).map(normalizeString);
+            const supportingFamilies = Units.getFamilies(supportingUnitID).map(normalizeString);
+            if (supportingFamilies.some(f => supportedFamilies.includes(f)))
+                return false;
+
+            return Criteria.parseCriteria(support.criteria)(supportedUnitID, supportedUnitVariant);
+
+        });
 
     },
 
@@ -236,7 +224,7 @@ export const Units = {
 
     },
 
-    getSwaps(unitID: Nullable<number | string>): Nullable<Swap> {
+    getSwap(unitID: Nullable<number | string>): Nullable<Swap> {
 
         if (!unitID) return null
 
@@ -296,17 +284,17 @@ export const Units = {
     },
 
     getTypes(unitID: Nullable<number | string>,
-             variant: Nullable<number> = null): string[] {
+             variant: Nullable<number> = null): Type[] {
         if (!unitID) return [ ];
         const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
         const data = window.units[fullID] ?? window.units[unitID];
         if (data?.type)
-            return [ data.type ];
+            return [ data.type ] as Type[];
         else if (window.units[unitID + '-1']) {
             return [
                 window.units[unitID + '-1'].type,
                 window.units[unitID + '-2']?.type
-            ].filter(t => !isNullish(t));
+            ].filter(t => !isNullish(t)) as Type[];
         } else
             return [ ];
     },
@@ -314,6 +302,12 @@ export const Units = {
     hasVariants(unitID: Nullable<number | string>): boolean {
         if (!unitID) return false;
         return (window.units[unitID]?.type === null);
+    },
+
+    isKnownFamily(value: string): boolean {
+        if (!knownFamilies)
+            knownFamilies = unique(Object.values(window.families ?? { }).flat().map(normalizeString));
+        return knownFamilies.includes(normalizeString(value));
     }
 
 }
@@ -325,8 +319,8 @@ export const Units = {
 // Caches the ID of the units that have a support at all
 let supporterIDs: Nullable<number[]> = null;
 
-// Criteria parse cache so we don't have to redo the parsing each time
-const criteriaCache = new Map<string, SupportCriteria>();
+// Caches known families
+let knownFamilies: Nullable<string[]> = null;
 
 function getLimitBreak(unitID: number | string, section: 'captain'): Nullable<Record<string, string>>;
 function getLimitBreak(unitID: number | string, section: 'special'): Nullable<Record<string, string | DbSpecial[]>>;
@@ -371,121 +365,6 @@ function getSupporterIDs(): number[] {
             .map(id => parseInt(id, 10));
     }
     return supporterIDs;
-}
-
-function parseSupportCriteria(criteria: string): SupportCriteria {
-    let result = criteriaCache.get(criteria);
-    if (!result) {
-        result = generateSupportCriteria(criteria);
-        criteriaCache.set(criteria, result);
-    }
-    return result;
-}
-
-function generateSupportCriteria(criteria: string): SupportCriteria {
-
-    const result: SupportCriteria = {
-        families: [ ],
-        types: [ ],
-        classes: [ ],
-        tags: [ ],
-        requiresEveryClass: false
-    };
-
-    const sanitized = criteria
-        .replace(TRAILING_CHARACTERS_REGEX, '')
-        .replace(ALIASES_REGEX, '');
-
-    const cost = sanitized.match(COST_REGEX);
-    if (cost) {
-        const value = parseInt(cost[1], 10);
-        if (cost[2].toLowerCase() === 'less') result.cost = { min: Number.NEGATIVE_INFINITY, max: value };
-        else result.cost = { min: value, max: Number.POSITIVE_INFINITY };
-        return result;
-    }
-
-    for (const term of sanitized.split(SEPARATOR_REGEX)) {
-
-        if (!term) continue;
-
-        let family = term;
-
-        const type = term.match(TYPE_REGEX);
-        if (type) {
-            result.types.push(normalizeString(type[1]));
-            family = family.replace(type[0], '');
-        }
-
-        const clazz = term.match(CLASS_REGEX);
-        if (clazz) {
-            result.classes.push(normalizeString(clazz[0]));
-            family = family.replace(clazz[0], '');
-        }
-
-        const tag = term.match(TAG_REGEX);
-        if (tag) {
-            result.tags.push(normalizeString(tag[1]));
-            family = family.replace(tag[0], '');
-        }
-
-        family = family.trim();
-        if (family) result.families.push(normalizeString(family));
-
-    }
-
-    // "Fighter/Slasher" requires both classes, "Fighter or Slasher" requires either
-    const split = sanitized.split(CLASS_REGEX);
-    result.requiresEveryClass = (split.length === 3 && split[1].trim() === '/');
-
-    return result;
-
-}
-
-function canSupport(supportingUnitID: number | string,
-                    target: SupportTarget): boolean {
-
-    const support = Units.getSupport(supportingUnitID);
-    if (!support?.base) return false;
-
-    const supportingFamilies = Units.getFamilies(supportingUnitID).map(normalizeString);
-    if (supportingFamilies.some(f => target.families.includes(f)))
-        return false;
-
-    if (ALL_CHARACTERS_REGEX.test(support.criteria))
-        return true;
-
-    const criteria = parseSupportCriteria(support.criteria);
-
-    // Types
-    if (criteria.types.length && !intersects(criteria.types, target.types))
-        return false;
-
-    // Classes
-    if (criteria.classes.length) {
-        const matches = criteria.requiresEveryClass
-            ? criteria.classes.every(c => target.classes.includes(c))
-            : intersects(criteria.classes, target.classes);
-        if (!matches) return false;
-    }
-
-    // Families
-    if (criteria.families.length && !intersects(criteria.families, target.families))
-        return false;
-
-    // Tags
-    if (criteria.tags.length && !intersects(criteria.tags, target.tags))
-        return false;
-
-    // Cost
-    if (criteria.cost && (isNullish(target.cost) || target.cost < criteria.cost.min || target.cost > criteria.cost.max))
-        return false;
-
-    return true;
-
-}
-
-function intersects(a: string[], b: string[]): boolean {
-    return a.some(v => b.includes(v));
 }
 
 function normalizeString(value: string): string {

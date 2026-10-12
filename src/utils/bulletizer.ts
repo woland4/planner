@@ -49,6 +49,10 @@ const CONDITIONS = [
 const STARTERS = [
     /^Up to \d+ times?\b/i,
     /^Once per adventure\b/i,
+    /^This character must be captain\b/i,
+    /^Can be launched as( a)? crewmate\b/i,
+    /^Your crew must consist\b/i,
+    /^When character becomes.*during Captain Shift\b/i,
     /\[AUTO\+]/i
 ];
 
@@ -68,10 +72,19 @@ const TITLES = [
 export const Bulletizer = {
 
     bulletize(input: string): string {
+        const bullets = Bulletizer.split(input);
+        return `<ul class="list-disc pl-4">${ bullets.map(b => `<li>${ b.replace(/(?<!>)$/, '.') }</li>`).join('') }</ul>`;
+    },
+
+    split(input: string): string[] {
+
+        const sanitizedInput = input
+            .replace(/(This character must be captain) and/, '$1.')
+            .replace(/(Can be launched as(?: a)? crewmate) and/, '$1.');
 
         // Floating points (eg. "1.5x") fuck up the whole end-of-phrase
         // detection so we escape them here and unescape them at the end
-        let escapedInput = input
+        let escapedInput = sanitizedInput
             .trim()
             .replace(/(\d)\.(\d)/g, "$1@@@$2");
 
@@ -108,10 +121,15 @@ export const Bulletizer = {
                 (isStarter || CONDITIONS.includes(leadingWord) || VERBS.includes(colonLeadingWord))) {
                 if (currentBullet.length) result.push(currentBullet);
                 currentBullet = [ token ];
-                isInClause = true;
+                if (!token.trim().endsWith('.'))
+                    isInClause = true;
+                else {
+                    result.push(currentBullet);
+                    currentBullet = [ ];
+                }
             }
 
-                // If we *are* in a clause, keep constructing the previous bullet but stop the
+            // If we *are* in a clause, keep constructing the previous bullet but stop the
             // clause as soon as we find a word ending with a dot (assuming it's the end of a statement)
             else if (isInClause) {
                 currentBullet.push(token);
@@ -119,7 +137,7 @@ export const Bulletizer = {
                     isInClause = false;
             }
 
-                // If we're here, we're not in a clause and the token is neither a condition nor a starter (nor a lead-in from a colon)
+            // If we're here, we're not in a clause and the token is neither a condition nor a starter (nor a lead-in from a colon)
             // We check if it's a verb (eg phrases like "Boosts ATK of...") and start a new bullet if it is
             else if (VERBS.includes(leadingWord)) {
                 if (currentBullet.length) result.push(currentBullet);
@@ -136,7 +154,7 @@ export const Bulletizer = {
         if (currentBullet.length)
             result.push(currentBullet);
 
-        const bullets = result.map(r => {
+        return result.map(r => {
 
             const unescaped = r
                 .join(' ')
@@ -148,12 +166,10 @@ export const Bulletizer = {
             if (unescaped.endsWith('</ul>'))
                 return capitalize(unescaped.replace(/<ul>/g, '<ul class="list-disc pl-4">'));
             else
-                return capitalize(unescaped + '.');
+                return capitalize(unescaped);
 
         });
 
-        return `<ul class="list-disc pl-4">${ bullets.map(b => `<li>${ b }</li>`).join('') }</ul>`;
-
-    }
+    },
 
 };

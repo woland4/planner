@@ -159,6 +159,17 @@
               collapsible="offcanvas"
               variant="floating">
 
+        <template #default>
+
+            <UEmpty v-if="!store.currentTab?.battle?.stages"
+                    title="Nothing to show"
+                    description="No battle selected or selected battle has no stages" />
+
+            <StageViewer v-else
+                         :battle="store.currentTab.battle" />
+
+        </template>
+
         <template #footer>
             <div class="w-full flex flex-row gap-1.25 items-center justify-between">
 
@@ -207,17 +218,6 @@
                 </UDropdownMenu>
 
             </div>
-        </template>
-
-        <template #default>
-
-            <UEmpty v-if="!store.currentTab?.battle?.stages"
-                    title="Nothing to show"
-                    description="No battle selected or selected battle has no stages" />
-
-            <StageViewer v-else
-                         :battle="store.currentTab.battle" />
-
         </template>
 
     </USidebar>

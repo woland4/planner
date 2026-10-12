@@ -14,7 +14,7 @@
     import type { DropdownMenuItem } from '@nuxt/ui';
     import type { Booster } from '@/types/battles.ts';
     import type { Nullable } from '@/types/utils.ts';
-    import type { Slot } from '@/types/enums.ts';
+    import type { Class, Slot } from '@/types/enums.ts';
 
     /*---------
       Constants
@@ -135,7 +135,7 @@
         // Class filter
         if (isString(parsed.class)) {
             const clazz = sanitizeClassFilter(parsed.class);
-            result = result.filter(({ id }) => Units.getClasses(id).includes(clazz));
+            result = result.filter(({ id }) => Units.getClasses(id).includes(clazz as Class));
         } else if (isArray(parsed.class)) {
             const classes = parsed.class.map((t: string) => sanitizeClassFilter(t));
             result = result.filter(({ id, variant }) => intersection(classes, Units.getClasses(id, variant)).length === classes.length);

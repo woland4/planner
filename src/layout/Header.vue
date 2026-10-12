@@ -83,7 +83,7 @@
     <UHeader :header="false"
              :ui="{
                  root: 'bg-black/30 shrink-0 z-10 [--ui-header-height:var(--header-height-mobile)] md:[--ui-header-height:var(--header-height-desktop)]',
-                 container: 'py-5! md:py-0! md:px-5! md:mx-0!',
+                 container: 'py-5! md:py-0! md:px-5! md:mx-0! max-w-none!',
                  left: 'md:font-bold md:relative md:bottom-0.75'
              }"
              :style="{
@@ -100,6 +100,15 @@
 
             OPTC Planner
 
+        </template>
+
+
+        <template #right>
+            <UButton icon="i-lucide-panel-right"
+                     color="neutral"
+                     variant="ghost"
+                     class="cursor-pointer"
+                     @click="store.rightSidebarVisible = !store.rightSidebarVisible" />
         </template>
 
         <template #toggle>
