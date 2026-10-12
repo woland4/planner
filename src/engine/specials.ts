@@ -102,7 +102,8 @@ function checkSpecial(team: Team,
         if (unboostedUnits.length > 0)
             result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } does not boost ${ formatBuff(type) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
     }
-    return result;
+
+    return postProcessResults(result);
 
 }
 
@@ -143,4 +144,39 @@ function formatBuff(buff: string): string {
         case 'base atk': return 'base ATK';
         default: return buff;
     }
+}
+
+// TODO Merge into main processing somehow
+function postProcessResults(results: string[]): string[] {
+
+    const mappedAccumulator: Record<string, string[]> = { };
+    const unmappedAccumulator: string[] = [ ];
+
+    for (let result of results) {
+
+        const match = result.match(/^(.+) does not boost (.+) for (.+)$/i);
+        if (!match) {
+            unmappedAccumulator.push(result);
+            continue;
+        }
+
+        const [ _, source, effect, target ] = match;
+        const key = `${ source }@@@${ target }`;
+
+        if (!mappedAccumulator[key]) mappedAccumulator[key] = [ effect ];
+        else mappedAccumulator[key].push(effect);
+
+    }
+
+    return [
+
+        ...Object.entries(mappedAccumulator).map(([ key, value ]) => {
+            const [ source, target ] = key.split('@@@');
+            return `${ source } does not boost ${ LIST_FORMATTER.format(value) } for ${ target }`;
+        }),
+
+        ...unmappedAccumulator
+
+    ];
+
 }

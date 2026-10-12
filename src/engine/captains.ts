@@ -1,4 +1,4 @@
-import { unique } from 'remeda';
+import { isNullish, unique } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
 import { Bulletizer } from '@/utils/bulletizer.ts';
@@ -80,6 +80,8 @@ import type { Nullable } from '@/types/utils.ts';
 
 const OTHER_PREFIX_REGEX = /^(?:all\s+)?other\s+/i;
 
+const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+
 /*-------
   Exports
   -------*/
@@ -114,14 +116,25 @@ function checkCaptain(team: Team,
     const bullets = Bulletizer.split(sanitizedAbility)
         .filter(bullet => /Boosts.*ATK/i.test(bullet));
 
-    const result: string[] = [ ];
-    for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
-        const unit = team.units[i];
-        if (!!unit?.id && !isBoosted(team, i, captainIndex, bullets))
-            result.push(`${ Html.decorateUnit(captain.id, captain.variant) } does not boost ${ Html.decorateUnit(unit.id, unit.variant) }`);
-    }
-    return result;
+    const unboostedUnits = calculateUnboostedUnits(team, captainIndex, bullets);
+    if (!unboostedUnits.length)
+        return [ ];
+    else
+        return [`${ Html.decorateUnit(captain.id, captain.variant) } does not boost ${ LIST_FORMATTER.format(unboostedUnits) }` ];
 
+}
+
+function calculateUnboostedUnits(team: Team,
+                                 captainIndex: number,
+                                 captainBullets: string[]): string[] {
+    return [ 5, 0, 4, 1, 3, 2]
+        .map(unitIndex => {
+            const unit = team.units[unitIndex];
+            if (!!unit?.id && !isBoosted(team, unitIndex, captainIndex, captainBullets))
+                return Html.decorateUnit(unit.id, unit.variant);
+            return null
+        })
+        .filter(u => !isNullish(u));
 }
 
 function isBoosted(team: Team,
