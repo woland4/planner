@@ -60,6 +60,8 @@ import type { Nullable } from '@/types/utils.ts';
 
 const BOOST_REGEX = /boosts.*(atk|orb effects|color affinity|base atk).+?of\s+(.+?)\s+by\s+/i;
 
+const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
+
 /*-------
   Exports
   -------*/
@@ -96,14 +98,25 @@ function checkSpecial(team: Team,
     const result: string[] = [ ];
     for (let bullet of bullets) {
         const [ _, type, targets ] = bullet.match(BOOST_REGEX)!!;
-        for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
-            const unit = team.units[i];
-            if (!!unit?.id && !isBoosted(team, i, unitIndex, targets))
-                result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } does not boost ${ formatBuff(type) } for ${ Html.decorateUnit(unit.id, unit.variant) }`);
-        }
+        const unboostedUnits = calculateUnboostedUnits(team, unitIndex, targets);
+        if (unboostedUnits.length > 0)
+            result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } does not boost ${ formatBuff(type) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
     }
     return result;
 
+}
+
+function calculateUnboostedUnits(team: Team,
+                                 launcherIndex: number,
+                                 targets: string): string[] {
+    return [ 5, 0, 4, 1, 3, 2]
+        .map(unitIndex => {
+            const unit = team.units[unitIndex];
+            if (!!unit?.id && !isBoosted(team, unitIndex, launcherIndex, targets))
+                return Html.decorateUnit(unit.id, unit.variant);
+            return null
+        })
+        .filter(u => !isNullish(u));
 }
 
 function isBoosted(team: Team,
