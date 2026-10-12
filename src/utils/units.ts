@@ -26,8 +26,8 @@ export type Captain = {
 };
 
 export type Special = {
-    base: BaseSpecial | BaseSpecial[];
-    combined?: BaseSpecial | BaseSpecial[];
+    base: BaseSpecial | BaseSpecial[]; // Array is for multi-stage specials
+    combined?: BaseSpecial | BaseSpecial[];  // Array is for multi-stage specials
 };
 
 export type BaseSpecial = {

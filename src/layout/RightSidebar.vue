@@ -7,6 +7,7 @@
     import { useResponsiveness } from '@/utils/responsiveness.ts';
 
     import { checkCaptainIssues } from '@/engine/captains.ts';
+    import { checkSpecialIssues } from '@/engine/specials.ts';
     import { checkSuperSpecialIssues } from '@/engine/superSpecials.ts';
     import { checkCaptainShiftIssues } from '@/engine/captainShifts.ts';
 
@@ -44,6 +45,9 @@
 
                     ...checkCaptainIssues(store.currentTab?.team)
                         .map(text => ({ tag: 'CAPTAIN', text })),
+
+                    ...checkSpecialIssues(store.currentTab?.team)
+                        .map(text => ({ tag: 'SPECIAL', tagColor: 'error', text })),
 
                     ...checkSuperSpecialIssues(store.currentTab?.team)
                         .map(text => ({ tag: 'SUPER SPECIAL', tagColor: 'warning', text })),

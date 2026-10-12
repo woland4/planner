@@ -144,13 +144,12 @@ function parseCriteriaTerm(term: string): Nullable<CriteriaCheck> {
 
     if (!term?.trim()) return null;
 
-    const candidates = [
+    const familyCandidates = [
         term,
         term.replace(/\.$/, ''),
         term.replace(/\.$/, '').replace(TRAILING_CHARACTERS_REGEX, '')
     ];
-
-    for (const candidate of candidates) {
+    for (const candidate of familyCandidates) {
         if (Units.isKnownFamily(candidate)) {
             const family = normalizeString(candidate);
             return (unitID, variant) => intersects([ family ], Units.getFamilies(unitID, variant));
@@ -209,9 +208,9 @@ function extractCriteriaTerm(term: string,
 }
 
 function intersects(values: string[],
-                    targetValues: string[]): boolean {
-    const normalized = targetValues.map(normalizeString);
-    return values.some(v => normalized.includes(v));
+                    targets: string[]): boolean {
+    const normalizedTargets = targets.map(normalizeString);
+    return values.some(v => normalizedTargets.includes(v));
 }
 
 function normalizeString(value: string): string {
