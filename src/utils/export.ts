@@ -1,4 +1,4 @@
-import { createApp, nextTick } from 'vue';
+import { computed, createApp, nextTick } from 'vue';
 import { EolStyle, Formatter, FracturedJsonOptions, NumberListAlignment, TableCommaPlacement } from 'fracturedjsonjs';
 import { toCanvas } from 'html-to-image';
 
@@ -68,9 +68,13 @@ export const Export = {
 
         const boost = Battles.getOverallBoost(team.units, battle?.boosters);
 
+        const hasBoost = !isNullish(boost);
+        const isPureBoost = battle?.boosters?.some(b => Numbers.isPositive(b.pureMultiplier));
+
         const height = (
             TEAM_CANVAS_MIN_HEIGHT +
-            (boost ?? 0 > 1 ? 30 + GAP : 0) +
+            (hasBoost ? 30 + GAP : 0) +
+            (hasBoost && isPureBoost ? 15 : 0) +
             (title?.length ? 20 + GAP : 0)
         );
 
@@ -125,14 +129,14 @@ export const Export = {
         y += (GAP * 3 + TEAM_MAIN_UNIT_SIZE * 3);
 
         // Boost
-        if (boost ?? 0 > 1) {
+        if (hasBoost) {
 
             drawBox({
                 context,
                 x: PADDING,
                 y,
                 w: TEAM_CANVAS_WIDTH - PADDING * 2,
-                h: 30,
+                h: 30 + (isPureBoost ? 15 : 0),
                 fillColor: '#0d2c33',
                 borderColor: '#0b5943',
                 borderRadius: 5
@@ -147,7 +151,19 @@ export const Export = {
                 h: 32,
                 color: '#05df72',
                 bold: true
-            })
+            });
+
+            drawText({
+                context,
+                text: `With friend: ${ (boost!! * 1.1).toFixed(2) }x`,
+                x: PADDING,
+                y: y + 10,
+                w: TEAM_CANVAS_WIDTH - PADDING * 2,
+                h: 42,
+                color: '#05df72',
+                bold: true,
+                size: 11
+            });
 
         }
 
