@@ -6,18 +6,21 @@
     import TeamLoadingModal from '@/modals/TeamLoadingModal.vue';
     import TeamPicker from '@/components/TeamPicker.vue';
 
+    import { useStore } from '@/store.ts';
+    import { useResponsiveness } from '@/utils/responsiveness.ts';
+
     import { Battles } from '@/utils/battles.ts';
     import { Export } from '@/utils/export.js';
-    import { useStore } from '@/store.ts';
+    import { Numbers } from '@/utils/numbers.ts';
 
     import type { SavedTeam } from '@/types/battles';
-    import type { Nullable } from '@/types/utils.ts';
 
     /*-----------
       Injectables
       -----------*/
 
     const store = useStore();
+    const responsiveness = useResponsiveness();
 
     /*--------
       Overlays
@@ -32,7 +35,9 @@
       Computed
       --------*/
 
-    const totalBoost = computed<Nullable<number>>(() => Battles.getOverallBoost(store.currentTab.team?.units, store.currentTab.battle?.boosters));
+    const totalBoost = computed(() => Battles.getOverallBoost(store.currentTab.team?.units, store.currentTab.battle?.boosters));
+
+    const isPureBoost = computed(() => store.currentTab.battle?.boosters?.some(b => Numbers.isPositive(b.pureMultiplier)));
 
     /*-------
       Methods
@@ -74,7 +79,7 @@
         const blob = Export.teamScreenshot(
             store.currentTab.battle,
             store.currentTab.team,
-            e.shiftKey ? store.currentTab?.name : null
+            e.shiftKey || responsiveness.isMobile.value ? store.currentTab?.name : null
         );
         await navigator.clipboard.write([ new ClipboardItem({ 'image/png': blob }) ]);
 
@@ -142,12 +147,23 @@
         </div>
 
         <UAlert v-if="totalBoost"
+                :class="{ 'pb-2.5!': isPureBoost }"
                 color="success"
                 variant="subtle"
-                class="w-fit text-center p-2">
+                class="w-fit text-center px-4 py-2 leading-none">
             <template #title>
-                Overall Boost:
+
+                Overall boost:
                 <strong>{{ totalBoost.toFixed(2) }}x</strong>
+
+                <small v-if="isPureBoost"
+                       class="block">
+
+                    With friend:
+                    <strong>{{ (totalBoost * 1.1).toFixed(2) }}x</strong>
+
+                </small>
+
             </template>
         </UAlert>
 
