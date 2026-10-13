@@ -116,7 +116,7 @@ function checkSuperSpecial(unit: Nullable<TeamUnit>,
 
     const targetBullets = bullets.filter(b => /crew must consist/i.test(b));
     if (!targetBullets?.length)
-        return `${ Html.decorateUnit(unit.id, unit.variant) } *may* not meet the conditions for its super special`;
+        return `${ Html.decorateUnit(unit.id, unit.variant) } *may* not meet the conditions for its super special, manual checking is required`;
 
     let result: ClauseResult = 'met';
     for (const targetBullet of targetBullets) {
@@ -142,7 +142,7 @@ function checkSuperSpecial(unit: Nullable<TeamUnit>,
     else if (result === 'unmet')
         return `${ Html.decorateUnit(unit.id, unit.variant) } does not meet the conditions for its super special`;
     else
-        return `${ Html.decorateUnit(unit.id, unit.variant) } *may* not meet the conditions for its super special`;
+        return `${ Html.decorateUnit(unit.id, unit.variant) } *may* not meet the conditions for its super special, manual checking is required`;
 
 }
 

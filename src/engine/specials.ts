@@ -88,6 +88,12 @@ export function checkSpecialIssues(team: Nullable<Team>): string[] {
 function checkSpecial(team: Team,
                       unitIndex: number): string[] {
 
+    const hasUniversalCaptain = (
+        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[0]?.id)?.base ?? '') ||
+        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[5]?.id)?.base ?? '')
+    );
+    if (hasUniversalCaptain) return [ ];
+
     const launcher = team.units[unitIndex];
     if (!launcher?.id) return [ ];
 
@@ -108,16 +114,11 @@ function checkSpecial(team: Team,
         }
     }
 
-    const hasUniversalCaptain = (
-        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[0]?.id)?.base ?? '') ||
-        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[5]?.id)?.base ?? '')
-    );
-
     const result: string[] = [ ];
     for (const [ buff, targets ] of groupedBuffs) {
         const unboostedUnits = unique(calculateUnboostedUnits(team, unitIndex, targets));
         if (unboostedUnits.length > 0)
-            result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } ${ hasUniversalCaptain ? '*may*' : 'does' } not boost ${ formatBuff(buff) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
+            result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } does not boost ${ formatBuff(buff) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
     }
 
     return postProcessResults(result);
@@ -170,14 +171,14 @@ function postProcessResults(results: string[]): string[] {
 
     for (let result of results) {
 
-        const match = result.match(/^(.+) (does|\*may\*) not boost (.+) for (.+)$/i);
+        const match = result.match(/^(.+) does not boost (.+) for (.+)$/i);
         if (!match) {
             unmappedAccumulator.push(result);
             continue;
         }
 
-        const [ _, source, gravity, effect, target ] = match;
-        const key = `${ source }@@@${ gravity }@@@${ target }`;
+        const [ _, source, effect, target ] = match;
+        const key = `${ source }@@@${ target }`;
 
         if (!mappedAccumulator[key]) mappedAccumulator[key] = [ effect ];
         else mappedAccumulator[key].push(effect);
@@ -187,8 +188,8 @@ function postProcessResults(results: string[]): string[] {
     return [
 
         ...Object.entries(mappedAccumulator).map(([ key, value ]) => {
-            const [ source, gravity, target ] = key.split('@@@');
-            return `${ source } ${ gravity } not boost ${ LIST_FORMATTER.format(value) } for ${ target }`;
+            const [ source, target ] = key.split('@@@');
+            return `${ source } does not boost ${ LIST_FORMATTER.format(value) } for ${ target }`;
         }),
 
         ...unmappedAccumulator

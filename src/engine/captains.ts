@@ -1,4 +1,4 @@
-import { isNullish, unique } from 'remeda';
+import { intersection, isNullish, unique } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
 import { Bulletizer } from '@/utils/bulletizer.ts';
@@ -38,10 +38,14 @@ import type { Nullable } from '@/types/utils.ts';
  * tag :=
  *     | [<any string>]
  *
- * typeOrClassOrTagTarget :=
+ * typeOrClassOrTag :=
  *     | <type>
  *     | <class>
  *     | <tag>
+ *
+ * types :=
+ *     | <type>
+ *     | <type>{, <type>}{0,},? and <type>
  *
  * costTarget :=
  *     | cost <N> characters
@@ -54,12 +58,12 @@ import type { Nullable } from '@/types/utils.ts';
  *     | cost <N> or <M> or higher characters
  *
  * boostTarget :=
- *     | <typeOrClassOrTagTarget>
- *     | <typeOrClassOrTagTarget>(, <typeOrClassOrTagTarget>){0,} and <typeOrClassOrTagTarget>
- *     | <typeOrClassOrTagTarget>(, <typeOrClassOrTagTarget>){0,}, and <typeOrClassOrTagTarget>
+ *     | <typeOrClassOrTag>
+ *     | <typeOrClassOrTag>(, <typeOrClassOrTag>){0,} and <typeOrClassOrTag>
+ *     | <typeOrClassOrTag>(, <typeOrClassOrTag>){0,}, and <typeOrClassOrTag>
  *     | <costTarget>
  *
- * searchFor :=
+ * boosts :=
  *     | boosts <boostedStats> of all characters by
  *     | boosts <boostedStats> of all character by
  *     | boosts <boostedStats> of this character by
@@ -68,6 +72,9 @@ import type { Nullable } from '@/types/utils.ts';
  *     | boosts <boostedStats> of all other characters by
  *     | boosts <boostedStats> of {...} and all others by
  *     | boosts <boostedStats> of {...} and all other characters by
+ *
+ * conditionals :=
+ *     | if there is a <types> character? in your crew
  *
  * Not covered: all types in the team (TODO?)
  * Not covered: boosts ATK or rarity (nah)
@@ -80,6 +87,8 @@ import type { Nullable } from '@/types/utils.ts';
   ---------*/
 
 const OTHER_PREFIX_REGEX = /^(?:all\s+)?other\s+/i;
+
+const TYPE_CONDITIONAL_REGEX = /if there is(?: a)? (.+?) characters? in your crew/i;
 
 const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
 
@@ -114,14 +123,20 @@ function checkCaptain(team: Team,
         .replace(/boosts (.+?)'s ATK by/gi, 'boosts ATK of $1 by')
         .replace(/and ATK of/gi, 'and boosts ATK of');
 
-    const bullets = Bulletizer.split(sanitizedAbility)
-        .filter(bullet => /Boosts.*ATK/i.test(bullet));
+    const bullets = Bulletizer.split(sanitizedAbility);
 
-    const unboostedUnits = calculateUnboostedUnits(team, captainIndex, bullets);
-    if (!unboostedUnits.length)
-        return [ ];
-    else
-        return [`${ Html.decorateUnit(captain.id, captain.variant) } does not boost ${ LIST_FORMATTER.format(unboostedUnits) }` ];
+    const result: string[] = [ ];
+
+    const atkBoosts = bullets.filter(bullet => /Boosts.*ATK/i.test(bullet));
+    const unboostedUnits = calculateUnboostedUnits(team, captainIndex, atkBoosts);
+    if (unboostedUnits.length)
+        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } does not boost ${ LIST_FORMATTER.format(unboostedUnits) }`);
+
+    const typeConditionals =  bullets.filter(bullet => TYPE_CONDITIONAL_REGEX.test(bullet));
+    if (typeConditionals.some(c => !isTypeConditionalMet(team, c)))
+        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } has unmet type requirements`);
+
+    return result;
 
 }
 
@@ -173,5 +188,20 @@ function isBoosted(team: Team,
     }
 
     return false;
+
+}
+
+function isTypeConditionalMet(team: Team,
+                              targets: string): boolean {
+
+    const requiredTypes = targets
+        .match(/\b(STR|QCK|DEX|PSY|INT)\b/g)
+        ?.map(t => t.toUpperCase()) ?? [ ];
+
+    const availableTypes = team.units
+        .map(u => Units.getTypes(u?.id, u?.variant)?.[0])
+        .filter(t => !isNullish(t));
+
+    return intersection(requiredTypes, availableTypes).length === requiredTypes.length;
 
 }
