@@ -114,7 +114,7 @@
                             <UBadge v-if="issueSet.tag"
                                     :color="issueSet.tagColor ?? 'info'"
                                     size="xs"
-                                    class="font-bold mr-1">
+                                    class="font-bold">
                                 {{ issueSet.tag }}
                             </UBadge>
                         </USeparator>

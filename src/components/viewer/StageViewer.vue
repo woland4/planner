@@ -83,8 +83,8 @@
 
                     <USeparator>
                         <UBadge :color="activation.badge"
-                                size="sm"
-                                class="font-bold py-0.5 uppercase">
+                                size="xs"
+                                class="font-bold text-[8px] uppercase">
                             {{ I18N.activation(activation.key) }}
                         </UBadge>
                     </USeparator>
