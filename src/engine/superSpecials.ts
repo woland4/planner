@@ -1,4 +1,4 @@
-import { isNullish } from 'remeda';
+import { isNullish, unique } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
 import { Bulletizer } from '@/utils/bulletizer.ts';
@@ -91,9 +91,9 @@ const KNOWN_BULLETS = [
 
 export function checkSuperSpecialIssues(team: Nullable<Team>): string[] {
     if (!team?.units?.length) return [ ];
-    return team.units
+    return unique(team.units
         .map((u, n) => checkSuperSpecial(u, n === 0 || n === 5, team))
-        .filter(i => !isNullish(i));
+        .filter(i => !isNullish(i)));
 }
 
 /*---------

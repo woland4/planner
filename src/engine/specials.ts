@@ -115,7 +115,7 @@ function checkSpecial(team: Team,
 
     const result: string[] = [ ];
     for (const [ buff, targets ] of groupedBuffs) {
-        const unboostedUnits = calculateUnboostedUnits(team, unitIndex, targets);
+        const unboostedUnits = unique(calculateUnboostedUnits(team, unitIndex, targets));
         if (unboostedUnits.length > 0)
             result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } ${ hasUniversalCaptain ? '*may*' : 'does' } not boost ${ formatBuff(buff) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
     }
