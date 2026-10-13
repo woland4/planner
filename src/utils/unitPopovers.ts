@@ -20,6 +20,7 @@ export type UnitPopoverData = {
     llb?: boolean;
     support?: boolean;
     hideCaptain?: boolean;
+    shift?: boolean;
 };
 
 /*-------
@@ -31,15 +32,15 @@ export const UnitPopovers = {
     currentUnit: shallowRef<Nullable<UnitPopoverTarget>>(null),
 
     showPopover(target: Omit<UnitPopoverTarget, 'key'>) {
-        if (UnitPopovers.currentUnit.value?.anchor === target.anchor) return;
-        UnitPopovers.currentUnit.value = { ...target, key: ++nextKey };
+        if (UnitPopovers.currentUnit.value?.anchor !== target.anchor)
+            UnitPopovers.currentUnit.value = { ...target, key: ++nextKey };
     },
 
     updatePopover(anchor: Nullable<HTMLElement>,
                   data: Nullable<UnitPopoverData>) {
         const current = UnitPopovers.currentUnit.value;
-        if (!anchor || current?.anchor !== anchor) return;
-        UnitPopovers.currentUnit.value = { ...current, data };
+        if (anchor && current?.anchor === anchor)
+            UnitPopovers.currentUnit.value = { ...current, data };
     },
 
     hidePopover(anchor: Nullable<HTMLElement>) {
