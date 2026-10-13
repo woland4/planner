@@ -31,7 +31,7 @@ export const Html = {
 
     textToHTML(text: string): string {
         return text.replace(/\(\((.+?)\)\)\[\[(.+?)\]\]/g,
-            (_, clazz, text) => `<span class='${ clazz }'>${ text }</span>`);
+            (_, clazz, text) => `<span class='whitespace-nowrap ${ clazz }'>${ text }</span>`);
     }
 
 }

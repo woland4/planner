@@ -15,6 +15,8 @@
   - `Unit.getSupportCondition(unitID, variant): string?` variant probably not needed
 - Battle presets
   - With expiration
+- Add back turns inside boosters
+  - Display CD reduction in popover?
 - Minor stuff
   - Add weakness exploit gimmick?
   - Add optional notes to gimmicks? eg "Only if 4+ giants in the team"

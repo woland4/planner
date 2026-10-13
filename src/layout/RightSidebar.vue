@@ -10,6 +10,13 @@
     import { checkSpecialIssues } from '@/engine/specials.ts';
     import { checkSuperSpecialIssues } from '@/engine/superSpecials.ts';
     import { checkCaptainShiftIssues } from '@/engine/captainShifts.ts';
+    import { checkGimmicks } from '@/engine/gimmicks.ts';
+
+    import { GimmickRegistry } from '@/utils/registry.ts';
+
+    import type { GimmickType } from '@/types/enums.ts';
+    import type { Stage } from '@/types/battles.ts';
+    import type { GimmickCheckStatus } from '@/types/engine.ts';
 
     /*-----
       Types
@@ -21,9 +28,15 @@
     };
 
     type IssueSet = {
+
         tag?: string;
         tagColor?: 'info' | 'success' | 'warning' | 'error';
+
+        gimmick?: GimmickType;
+        gimmickStatus?: GimmickCheckStatus;
+
         contents: string[];
+
     };
 
     /*-----------
@@ -39,6 +52,7 @@
 
     const issues = computed<IssueGroup[]>(() => {
         return [
+
             {
                 title: 'Team Composition',
                 issues: [
@@ -66,9 +80,31 @@
                         contents: checkCaptainShiftIssues(store.currentTab?.team)
                     }
 
-                ].filter(g => g.contents.length > 0)
+                ].filter(g => g?.contents?.length ?? 0 > 0)
             },
-        ].filter(g => g.issues?.length > 0);
+
+            ...(store.currentTab?.battle?.stages ?? [ ]).flatMap((stage: Stage, n: number) => {
+
+                const gimmickIssues = checkGimmicks(stage, store.currentTab?.team)
+                    .filter(r => r.status !== 'ignored')
+                    .map(r => ({
+                        gimmick: r.gimmick.type,
+                        gimmickStatus: r.status,
+                        contents: r.details ?? [ ]
+                    }));
+
+                if (!gimmickIssues.length)
+                    return [ ];
+                else {
+                    return [{
+                        title: `Stage ${ n + 1 }`,
+                        issues: gimmickIssues
+                    }];
+                }
+
+            })
+
+        ].filter(g => g?.issues?.length ?? 0 > 0);
     });
 
     /*-------
@@ -88,7 +124,7 @@
                   container: 'h-full pt-(--sidebar-padding-top)',
                   inner: 'bg-elevated/25',
                   header: 'p-4 min-h-auto',
-                  body: 'p-2 text-[12px]'
+                  body: 'p-2 text-[11px]'
               }"
               :style="{
                   '--sidebar-width': 'var(--sidebar-right-width-desktop)',
@@ -106,11 +142,13 @@
                    :key="n"
                    :title="group.title"
                    :ui="{ header: 'p-2! bg-black/50 leading-none font-bold', body: 'p-2! flex flex-col gap-[5px]' }">
-                <ul class="list-disc pl-4">
-                    <template v-for="(issueSet,m) in group.issues"
-                              :key="m">
+                <template v-for="(issueSet,m) in group.issues"
+                          :key="m">
 
-                        <USeparator class="my-1">
+                    <template v-if="!issueSet.gimmick">
+
+                        <USeparator v-if="issueSet.tag"
+                                    class="my-1">
                             <UBadge v-if="issueSet.tag"
                                     :color="issueSet.tagColor ?? 'info'"
                                     size="xs"
@@ -119,12 +157,42 @@
                             </UBadge>
                         </USeparator>
 
-                        <li v-for="(issue,j) in issueSet.contents"
-                            v-html="formatIssue(issue)"
-                            :key="j" />
+                        <ul class="list-disc pl-4">
+                            <li v-for="(issue,j) in issueSet.contents"
+                                v-html="formatIssue(issue)"
+                                :key="j" />
+                        </ul>
 
                     </template>
-                </ul>
+
+                    <template v-else>
+
+                        <span class="flex items-center gap-1.25">
+                            <span :class="GimmickRegistry[issueSet.gimmick].icon ?? issueSet.gimmick"
+                                  class="optc-icon w-3.5 h-3.5" />
+
+                            <strong>
+                                {{ GimmickRegistry[issueSet.gimmick].label }}
+                            </strong>
+
+                            <UBadge v-if="issueSet.gimmickStatus && issueSet.gimmickStatus !== 'advisory'"
+                                    :color="issueSet.gimmickStatus === 'handled' ? 'success' : 'error'"
+                                    size="xs"
+                                    class="font-bold">
+                                {{ issueSet.gimmickStatus === 'handled' ? 'HANDLED' : 'NOT HANDLED' }}
+                            </UBadge>
+
+                        </span>
+
+                        <ul class="list-disc pl-6.75">
+                            <li v-for="(issue,j) in issueSet.contents"
+                                v-html="formatIssue(issue)"
+                                :key="j" />
+                        </ul>
+
+                    </template>
+
+                </template>
             </UCard>
 
             <UEmpty v-if="!issues.length"
