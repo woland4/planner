@@ -17,13 +17,13 @@
 
     type IssueGroup = {
         title: string;
-        issues: Issue[][];
+        issues: IssueSet[];
     };
 
-    type Issue = {
+    type IssueSet = {
         tag?: string;
         tagColor?: 'info' | 'success' | 'warning' | 'error';
-        text: string;
+        contents: string[];
     };
 
     /*-----------
@@ -43,19 +43,30 @@
                 title: 'Team Composition',
                 issues: [
 
-                    checkCaptainIssues(store.currentTab?.team)
-                        .map(text => ({ tag: 'CAPTAIN', text })),
+                    {
+                        tag: 'CAPTAINS',
+                        contents: checkCaptainIssues(store.currentTab?.team)
+                    },
 
-                    checkSpecialIssues(store.currentTab?.team)
-                        .map(text => ({ tag: 'SPECIAL', tagColor: 'error', text })),
+                    {
+                        tag: 'SPECIALS',
+                        tagColor: 'error' as const,
+                        contents: checkSpecialIssues(store.currentTab?.team)
+                    },
 
-                    checkSuperSpecialIssues(store.currentTab?.team)
-                        .map(text => ({ tag: 'SUPER SPECIAL', tagColor: 'warning', text })),
+                    {
+                        tag: 'SUPER SPECIALS',
+                        tagColor: 'warning' as const,
+                        contents: checkSuperSpecialIssues(store.currentTab?.team)
+                    },
 
-                    checkCaptainShiftIssues(store.currentTab?.team)
-                        .map(text => ({ tag: 'CAPTAIN SHIFT', tagColor: 'error', text }))
+                    {
+                        tag: 'CAPTAIN SHIFTS',
+                        tagColor: 'success' as const,
+                        contents: checkCaptainShiftIssues(store.currentTab?.team)
+                    }
 
-                ].filter(g => g.length > 0)
+                ].filter(g => g.contents.length > 0)
             },
         ].filter(g => g.issues?.length > 0);
     });
@@ -99,22 +110,18 @@
                     <template v-for="(issueSet,m) in group.issues"
                               :key="m">
 
-                        <li v-for="(issue,j) in issueSet"
-                            :key="j">
-
-                            <UBadge v-if="issue.tag"
-                                    :color="issue.tagColor ?? 'info'"
+                        <USeparator class="my-1">
+                            <UBadge v-if="issueSet.tag"
+                                    :color="issueSet.tagColor ?? 'info'"
                                     size="xs"
                                     class="font-bold mr-1">
-                                {{ issue.tag }}
+                                {{ issueSet.tag }}
                             </UBadge>
+                        </USeparator>
 
-                            <span v-html="formatIssue(issue.text)" />
-
-                        </li>
-
-                        <USeparator v-if="m < group.issues.length - 1"
-                                    class="my-1" />
+                        <li v-for="(issue,j) in issueSet.contents"
+                            v-html="formatIssue(issue)"
+                            :key="j" />
 
                     </template>
                 </ul>

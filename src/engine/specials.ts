@@ -72,8 +72,8 @@ const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunc
 
 export function checkSpecialIssues(team: Nullable<Team>): string[] {
     if (!team?.units?.length) return [ ];
-    return unique(team.units
-        .map((_,n) => checkSpecial(team, n))
+    return unique([ 5, 0, 4, 1, 3, 2]
+        .map(n => checkSpecial(team, n))
         .flat()
         .filter(i => !isNullish(i)));
 }
