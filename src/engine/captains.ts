@@ -43,6 +43,11 @@ import type { Nullable } from '@/types/utils.ts';
  *     | <class>
  *     | <tag>
  *
+ * typesOrClassesOrTags :=
+ *     | <typeOrClassOrTag>
+ *     | <typeOrClassOrTag>(, <typeOrClassOrTag>){0,} and <typeOrClassOrTag>
+ *     | <typeOrClassOrTag>(, <typeOrClassOrTag>){0,}, and <typeOrClassOrTag>
+ *
  * types :=
  *     | <type>
  *     | <type>{, <type>}{0,},? and <type>
@@ -58,9 +63,7 @@ import type { Nullable } from '@/types/utils.ts';
  *     | cost <N> or <M> or higher characters
  *
  * boostTarget :=
- *     | <typeOrClassOrTag>
- *     | <typeOrClassOrTag>(, <typeOrClassOrTag>){0,} and <typeOrClassOrTag>
- *     | <typeOrClassOrTag>(, <typeOrClassOrTag>){0,}, and <typeOrClassOrTag>
+ *     | <typesOrClassesOrTags>
  *     | <costTarget>
  *
  * boosts :=
@@ -74,7 +77,8 @@ import type { Nullable } from '@/types/utils.ts';
  *     | boosts <boostedStats> of {...} and all other characters by
  *
  * conditionals :=
- *     | if there is a <types> character? in your crew
+ *     | if your crew has N+? <typesOrClassesOrTags> characters?
+ *     | if there is a <types> characters? in your crew
  *
  * Not covered: boosts ATK or rarity (nah)
  * Not covered: boosts ATK of dominant type characters (fuck that)
@@ -87,6 +91,7 @@ import type { Nullable } from '@/types/utils.ts';
 
 const OTHER_PREFIX_REGEX = /^(?:all\s+)?other\s+/i;
 
+const GENERIC_CONDITIONAL_REGEX = /if(?: your)? crew has (\d+)\+? (.+) characters?/i;
 const TYPE_CONDITIONAL_REGEX = /if there is(?: a)? (.+?) characters? in your crew/i;
 
 const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
@@ -131,9 +136,13 @@ function checkCaptain(team: Team,
     if (unboostedUnits.length)
         result.push(`${ Html.decorateUnit(captain.id, captain.variant) } does not boost ${ LIST_FORMATTER.format(unboostedUnits) }`);
 
+    const genericConditionals =  bullets.filter(bullet => GENERIC_CONDITIONAL_REGEX.test(bullet));
+    if (genericConditionals.some(c => !isGenericConditionalMet(team, c)))
+        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } has unmet crew requirements`);
+
     const typeConditionals =  bullets.filter(bullet => TYPE_CONDITIONAL_REGEX.test(bullet));
     if (typeConditionals.some(c => !isTypeConditionalMet(team, c)))
-        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } has unmet type requirements`);
+        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } has unmet crew requirements`);
 
     return result;
 
@@ -187,6 +196,25 @@ function isBoosted(team: Team,
     }
 
     return false;
+
+}
+
+function isGenericConditionalMet(team: Team,
+                                 bullet: string): boolean {
+
+    const matches = bullet.match(GENERIC_CONDITIONAL_REGEX);
+    if (!matches) return false;
+
+    const [ _, number, targets ] = matches;
+
+    const criteria = Criteria.parseCriteria(targets);
+
+    const requiredNumber = parseInt(number, 10);
+    const availableNumber = (team.units ?? [ ])
+        .filter(u => u?.id)
+        .reduce((p,n) => p + (criteria(n!!.id, n!!.variant) ? 1 : 0), 0);
+
+    return (availableNumber >= requiredNumber);
 
 }
 
