@@ -1,15 +1,16 @@
 import { isArray, isNullish, isNumber, isPlainObject, isString, unique } from 'remeda';
 
-import type { Nullable } from '@/types/utils.ts';
 import { Criteria } from '@/utils/criteria.ts';
+import { IS_DEV } from '@/utils/debug.ts';
+
+import type { Nullable } from '@/types/utils.ts';
 import type { Class, Type } from '@/types/enums.ts';
 
 /*---------
   Constants
   ---------*/
 
-const IMAGE_BASE = 'https://2Shankz.github.io/optc-db.github.io';
-//const IMAGE_BASE = 'http://localhost/optc';
+const IMAGE_BASE = (IS_DEV ? 'http://localhost/optc' : 'https://2Shankz.github.io/optc-db.github.io');
 
 const IGNORED_SUPPORT_REGEXES = [
     /reduces damage received from [^.]+ by [\d.]%\./i,

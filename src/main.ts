@@ -10,8 +10,6 @@ import 'vue-virtual-scroller/index.css';
 import '@/style/libs.css';
 import '@/style/icons.scss';
 
-import '@/utils/debug.ts';
-
 const app = createApp(Root);
 
 app.use(createPinia());

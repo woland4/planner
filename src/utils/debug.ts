@@ -1,9 +1,23 @@
-import { Units } from '@/utils/units.ts';
-import { Bulletizer } from '@/utils/bulletizer.ts';
-import { Criteria } from '@/utils/criteria.ts';
+/*-------
+  Exports
+  -------*/
 
-if (import.meta.env.MODE === 'development') {
-    (window as any).Units = Units;
-    (window as any).Bulletizer = Bulletizer;
-    (window as any).Criteria = Criteria;
+export const IS_DEV = import.meta.env.MODE === 'development';
+
+/*---------
+  Utilities
+  ---------*/
+
+if (IS_DEV) {
+    (async () => {
+
+        const { Units } = await import('@/utils/units.ts');
+        const { Bulletizer } = await import('@/utils/bulletizer.ts');
+        const { Criteria } = await import('@/utils/criteria.ts');
+
+        (window as any).Units = Units;
+        (window as any).Bulletizer = Bulletizer;
+        (window as any).Criteria = Criteria;
+
+    })();
 }
