@@ -84,7 +84,7 @@
     <USidebar v-if="store.currentTab"
               v-model:open="store.rightSidebarVisible"
               :ui="{
-                  root: 'fixed left-0 top-0 bottom-0',
+                  root: 'fixed right-0 top-0 bottom-0',
                   container: 'h-full pt-(--sidebar-padding-top)',
                   inner: 'bg-elevated/25',
                   header: 'p-4 min-h-auto',
