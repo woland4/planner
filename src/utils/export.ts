@@ -1,4 +1,4 @@
-import { computed, createApp, nextTick } from 'vue';
+import { createApp, nextTick } from 'vue';
 import { EolStyle, Formatter, FracturedJsonOptions, NumberListAlignment, TableCommaPlacement } from 'fracturedjsonjs';
 import { toCanvas } from 'html-to-image';
 
