@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { useTemplateRef, watch } from 'vue';
+    import { onBeforeUnmount, useTemplateRef, watch } from 'vue';
     import { isNullish } from 'remeda';
 
     import { useResponsiveness } from '@/utils/responsiveness.ts';
@@ -64,6 +64,12 @@
         if (responsiveness.isDesktop.value)
             UnitPopovers.hidePopover(rootRef.value);
     }
+
+    /*---------
+      Lifecycle
+      ---------*/
+
+    onBeforeUnmount(() => UnitPopovers.hidePopover(rootRef.value));
 </script>
 
 <template>
