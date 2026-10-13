@@ -58,7 +58,11 @@ import type { Nullable } from '@/types/utils.ts';
   Constants
   ---------*/
 
-const BOOST_REGEX = /boosts.*(atk|orb effects|color affinity|base atk).+?of\s+(.+?)\s+by\s+/i;
+const BOOST_REGEX = /boosts\s+(atk|orb effects|color affinity|base atk)(?:\s+and\s+[a-z ]+?)?\s+of\s+(.+?)\s+by\s+/gi;
+
+const UNIVERSAL_CAPTAIN_REGEX = /makes all specials that apply class or type restricted buffs/i;
+
+const OTHER_PREFIX_REGEX = /^(?:all\s+)?other\s+/i;
 
 const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
 
@@ -92,15 +96,28 @@ function checkSpecial(team: Team,
     const description = ability?.description;
     if (!isString(description)) return [ ];
 
-    const bullets = Bulletizer.split(description)
-        .filter(bullet => BOOST_REGEX.test(bullet));
+    // A buff can be applied to different tagets by different bullets and
+    // a bullet can also contain different targets for the same buff (see #3956)
+    // We gather every target of a given buff before looking for unboosted units
+    const groupedBuffs = new Map<string, string[]>();
+    for (const bullet of Bulletizer.split(description)) {
+        for (const [ , buff, targets ] of bullet.matchAll(BOOST_REGEX)) {
+            const existing = groupedBuffs.get(buff.toLowerCase());
+            if (!existing) groupedBuffs.set(buff.toLowerCase(), [ targets ]);
+            else existing.push(targets);
+        }
+    }
+
+    const hasUniversalCaptain = (
+        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[0]?.id)?.base ?? '') ||
+        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[5]?.id)?.base ?? '')
+    );
 
     const result: string[] = [ ];
-    for (let bullet of bullets) {
-        const [ _, type, targets ] = bullet.match(BOOST_REGEX)!!;
+    for (const [ buff, targets ] of groupedBuffs) {
         const unboostedUnits = calculateUnboostedUnits(team, unitIndex, targets);
         if (unboostedUnits.length > 0)
-            result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } does not boost ${ formatBuff(type) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
+            result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } ${ hasUniversalCaptain ? '*may*' : 'does' } not boost ${ formatBuff(buff) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
     }
 
     return postProcessResults(result);
@@ -109,7 +126,7 @@ function checkSpecial(team: Team,
 
 function calculateUnboostedUnits(team: Team,
                                  launcherIndex: number,
-                                 targets: string): string[] {
+                                 targets: string[]): string[] {
     return [ 5, 0, 4, 1, 3, 2]
         .map(unitIndex => {
             const unit = team.units[unitIndex];
@@ -123,17 +140,16 @@ function calculateUnboostedUnits(team: Team,
 function isBoosted(team: Team,
                    unitIndex: number,
                    launcherIndex: number,
-                   targets: string): boolean {
-
-    const unit = team.units[unitIndex]!!;
-
-    if (/^this characters?$/i.test(targets) && launcherIndex === unitIndex)
-        return true;
-    else if (Criteria.parseCriteria(targets)(unit.id, unit.variant))
-        return true;
-
-    return false;
-
+                   targets: string[]): boolean {
+    const unit = team.units[unitIndex]!;
+    return targets.some(target => {
+        if (/^this characters?$/i.test(target))
+            return launcherIndex === unitIndex;
+        if (OTHER_PREFIX_REGEX.test(target) && launcherIndex === unitIndex)
+            return false;
+        else
+            return Criteria.parseCriteria(target.replace(OTHER_PREFIX_REGEX, ''))(unit.id, unit.variant);
+    });
 }
 
 function formatBuff(buff: string): string {
@@ -154,14 +170,14 @@ function postProcessResults(results: string[]): string[] {
 
     for (let result of results) {
 
-        const match = result.match(/^(.+) does not boost (.+) for (.+)$/i);
+        const match = result.match(/^(.+) (does|\*may\*) not boost (.+) for (.+)$/i);
         if (!match) {
             unmappedAccumulator.push(result);
             continue;
         }
 
-        const [ _, source, effect, target ] = match;
-        const key = `${ source }@@@${ target }`;
+        const [ _, source, gravity, effect, target ] = match;
+        const key = `${ source }@@@${ gravity }@@@${ target }`;
 
         if (!mappedAccumulator[key]) mappedAccumulator[key] = [ effect ];
         else mappedAccumulator[key].push(effect);
@@ -171,8 +187,8 @@ function postProcessResults(results: string[]): string[] {
     return [
 
         ...Object.entries(mappedAccumulator).map(([ key, value ]) => {
-            const [ source, target ] = key.split('@@@');
-            return `${ source } does not boost ${ LIST_FORMATTER.format(value) } for ${ target }`;
+            const [ source, gravity, target ] = key.split('@@@');
+            return `${ source } ${ gravity } not boost ${ LIST_FORMATTER.format(value) } for ${ target }`;
         }),
 
         ...unmappedAccumulator

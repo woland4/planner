@@ -69,6 +69,7 @@ import type { Nullable } from '@/types/utils.ts';
  *     | boosts <boostedStats> of {...} and all others by
  *     | boosts <boostedStats> of {...} and all other characters by
  *
+ * Not covered: all types in the team (TODO?)
  * Not covered: boosts ATK or rarity (nah)
  * Not covered: boosts ATK of dominant type characters (fuck that)
  *

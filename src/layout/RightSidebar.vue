@@ -17,7 +17,7 @@
 
     type IssueGroup = {
         title: string;
-        issues: Issue[];
+        issues: Issue[][];
     };
 
     type Issue = {
@@ -43,19 +43,19 @@
                 title: 'Team Composition',
                 issues: [
 
-                    ...checkCaptainIssues(store.currentTab?.team)
+                    checkCaptainIssues(store.currentTab?.team)
                         .map(text => ({ tag: 'CAPTAIN', text })),
 
-                    ...checkSpecialIssues(store.currentTab?.team)
+                    checkSpecialIssues(store.currentTab?.team)
                         .map(text => ({ tag: 'SPECIAL', tagColor: 'error', text })),
 
-                    ...checkSuperSpecialIssues(store.currentTab?.team)
+                    checkSuperSpecialIssues(store.currentTab?.team)
                         .map(text => ({ tag: 'SUPER SPECIAL', tagColor: 'warning', text })),
 
-                    ...checkCaptainShiftIssues(store.currentTab?.team)
+                    checkCaptainShiftIssues(store.currentTab?.team)
                         .map(text => ({ tag: 'CAPTAIN SHIFT', tagColor: 'error', text }))
 
-                ]
+                ].filter(g => g.length > 0)
             },
         ].filter(g => g.issues?.length > 0);
     });
@@ -96,19 +96,27 @@
                    :title="group.title"
                    :ui="{ header: 'p-2! bg-black/50 leading-none font-bold', body: 'p-2! flex flex-col gap-[5px]' }">
                 <ul class="list-disc pl-4">
-                    <li v-for="(issue,m) in group.issues"
-                        :key="m">
+                    <template v-for="(issueSet,m) in group.issues"
+                              :key="m">
 
-                        <UBadge v-if="issue.tag"
-                                :color="issue.tagColor ?? 'info'"
-                                size="xs"
-                                class="font-bold mr-1">
-                            {{ issue.tag }}
-                        </UBadge>
+                        <li v-for="(issue,j) in issueSet"
+                            :key="j">
 
-                        <span v-html="formatIssue(issue.text)" />
+                            <UBadge v-if="issue.tag"
+                                    :color="issue.tagColor ?? 'info'"
+                                    size="xs"
+                                    class="font-bold mr-1">
+                                {{ issue.tag }}
+                            </UBadge>
 
-                    </li>
+                            <span v-html="formatIssue(issue.text)" />
+
+                        </li>
+
+                        <USeparator v-if="m < group.issues.length - 1"
+                                    class="my-1" />
+
+                    </template>
                 </ul>
             </UCard>
 
