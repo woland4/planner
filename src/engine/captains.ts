@@ -76,7 +76,6 @@ import type { Nullable } from '@/types/utils.ts';
  * conditionals :=
  *     | if there is a <types> character? in your crew
  *
- * Not covered: all types in the team (TODO?)
  * Not covered: boosts ATK or rarity (nah)
  * Not covered: boosts ATK of dominant type characters (fuck that)
  *

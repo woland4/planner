@@ -1,0 +1,22 @@
+- Add LLB support
+  - `units.llb: number` (0-5)
+  - `Units.getLlbLevels(unitID): number[]` excluding rumble shit
+  - Clickable badge on the top left of each unit (only if it has LLB levels)
+  - Propagate it to the engine
+  - Remove right click on the team picker
+- Simplify signatures of `Units.get*`
+  - `Unit.getCaptain(unitID, variant, llbLevel?): string` return the combined only when `!variant`
+  - `Unit.getSpecial(unitID, variant, llbLevel?): string` return the combined only when `!variant`
+  - `Unit.getFullSpecial(unitID, variant, llbLevel?): string[]` for the popover, return the combined only when `!variant`
+  - `Unit.getSpecialCooldown(unitID, variant): number?` check if we actually need variant
+  - `Unit.getSuperSpecialDescription(unitID, variant): string?`
+  - `Unit.getSuperSpecialCondition(unitID, variant): string?`
+  - `Unit.getSupportDescription(unitID, variant): string?` variant probably not needed
+  - `Unit.getSupportCondition(unitID, variant): string?` variant probably not needed
+- Battle presets
+  - With expiration
+- Minor stuff
+  - Add weakness exploit gimmick?
+  - Add optional notes to gimmicks? eg "Only if 4+ giants in the team"
+  - Allow adding combined forms to the team?
+  - JSON optimization? merge etc.
