@@ -152,10 +152,13 @@
             result = result.filter(({ id }) => Units.getRarity(id) === parsed.rarity);
 
         // Tag filter
-        if (isString(parsed.tag))
-            result = result.filter(({ id, variant }) => Units.getTags(id, variant).includes(parsed.tag));
-        else if (isArray(parsed.tag))
-            result = result.filter(({ id, variant }) => intersection(parsed.tag, Units.getTags(id, variant)).length == parsed.tag.length);
+        if (isString(parsed.tag)) {
+            const tag = parsed.tag.toLowerCase();
+            result = result.filter(({ id, variant }) => Units.getTags(id, variant).map(t => t.toLowerCase()).includes(tag));
+        } else if (isArray(parsed.tag)) {
+            const tags = (parsed.tag as string[]).map(t => t.toLowerCase());
+            result = result.filter(({ id, variant }) => intersection(tags, Units.getTags(id, variant).map(t => t.toLowerCase())).length == tags.length);
+        }
 
         // Captain filter
         if (isString(parsed.captain) && parsed.captain.trim().length > 0) {
