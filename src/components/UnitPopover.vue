@@ -34,7 +34,8 @@
         hideCaptain?: boolean,
         index?: Nullable<number>,
         assumeLlb?: Nullable<boolean>,
-        support?: Nullable<boolean>
+        support?: Nullable<boolean>,
+        shift?: Nullable<boolean>
     }>();
 
     /*--------
@@ -277,7 +278,7 @@
 
             <span v-if="sections.length > 1"
                   class="ml-auto shrink-0 text-[11px] text-dimmed tabular-nums">
-                Scroll to cycle, {{ sanitizedIndex + 1 }} / {{ sections.length }}
+                {{ props.shift ? 'Shift + scroll' : 'Scroll' }} to cycle, {{ sanitizedIndex + 1 }} / {{ sections.length }}
             </span>
 
         </div>

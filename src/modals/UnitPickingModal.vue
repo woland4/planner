@@ -75,6 +75,8 @@
 
     const selection = ref<ListItem[]>([ ]);
 
+    const enablePopovers = useStorage('unitPicking.popovers', false);
+
     /*--------
       Computed
       --------*/
@@ -120,7 +122,11 @@
         for (let token of (parsed?.text ?? '').split(/\s+/)) {
             if (!token.length) continue;
             const sanitized = token.toLowerCase();
-            result = result.filter(({ id, variant }) => Units.getName(id, variant)?.toLowerCase()?.includes(sanitized));
+            if (/^\d+$/.test(sanitized)) {
+                const parsed = parseInt(sanitized, 10);
+                result = result.filter(({ id }) => id === parsed);
+            } else
+                result = result.filter(({ id, variant }) => Units.getName(id, variant)?.toLowerCase()?.includes(sanitized));
         }
 
         // Type filter
@@ -406,8 +412,8 @@
                                    :variant="item.variant"
                                    :boost="boosterMap[item.id]"
                                    :class="{ 'border-4! border-red-500! rounded-[10px]!': selection.some(s => s.id === item.id) }"
-                                   :popover-data="{ support: !!props.supportedUnitID, index: popoverIndices[item.id] }"
-                                   popover-side="bottom"
+                                   :popover-data="enablePopovers ? { support: !!props.supportedUnitID, index: popoverIndices[item.id], shift: true } : undefined"
+                                   :popover-side="enablePopovers ? 'bottom' : undefined"
                                    loading="lazy"
                                    class="w-12.5 h-12.5 mr-1.25 mb-1.25 cursor-pointer rounded-[7px]"
                                    @click="onSelection(item)" />
@@ -438,7 +444,8 @@
 
             <span v-if="responsiveness.isDesktop.value"
                   class="mr-auto self-center text-xs text-dimmed">
-                Shift + scroll to cycle unit details
+                <UCheckbox v-model="enablePopovers"
+                           description="Enable popovers" />
             </span>
 
             <UButton label="Cancel"
