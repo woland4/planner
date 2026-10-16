@@ -120,7 +120,7 @@
                     const data = Gimmicks.getGimmickDetails(i.gimmick.type);
                     return {
                         title: isString(data?.label) ? data.label : (isFunction(data?.label) ? data.label(i.gimmick) : i.gimmick.type),
-                        icon: isString(data?.icon) ? data.icon : (isFunction(data?.icon) ? data.icon(i.gimmick) : undefined),
+                        icon: (isString(data?.icon) ? data.icon : (isFunction(data?.icon) ? data.icon(i.gimmick) : undefined)) ?? i.gimmick.type,
                         badge: i.status === 'advisory' ? undefined : i.status.toUpperCase(),
                         badgeColor: i.status === 'handled' ? 'success' : 'error',
                         details: (i.details ?? [ ]).map(text => ({ text }))

@@ -2,8 +2,75 @@
   - With expiration
 - Add back turns inside boosters
   - Display CD reduction in popover?
+- Ship support?
+  - Data from where? 
+  - Thumbs from where?
+  - Where to place it in the UI?
 - Minor stuff
   - Add weakness exploit gimmick?
   - Add optional notes to gimmicks? eg "Only if 4+ giants in the team"
   - JSON optimization? merge etc.
   - Add LLB badge in team screenshot
+- Gimmicks:
+  - [ ] attackDown
+  - [ ] attackDownAboveChain
+  - [ ] attackDownBelowChain
+  - [ ] attackUp
+  - [x] beneficialEffectRemoval
+  - [ ] bind
+  - [ ] bleed
+  - [ ] blindness
+  - [ ] blowAway
+  - [ ] burn
+  - [x] cdReduction
+  - [ ] chainGrowthDown
+  - [ ] chainLock
+  - [ ] damage
+  - [ ] damageLimit
+  - [ ] damageNullification
+  - [ ] damageReduction
+  - [ ] damageThreshold
+  - [ ] defenseUp
+  - [ ] despair
+  - [ ] endOfTurnDamage
+  - [ ] healDamage
+  - [ ] healthCutResistance
+  - [ ] hitBarrier
+  - [x] hunger
+  - [ ] immunity
+  - [ ] increasedDamage
+  - [ ] intimidation
+  - [ ] lockSlots
+  - [x] nao
+  - [ ] noPotentialAbilities
+  - [ ] noRcv
+  - [ ] pain
+  - [ ] paralysis
+  - [ ] poison
+  - [ ] provoked
+  - [ ] rcvDamage
+  - [ ] resilience
+  - [ ] silence
+  - [ ] slotBarrier
+  - [ ] slotBind
+  - [ ] slotChange
+  - [ ] slotDamageReduction
+  - [ ] slotMultiplierChange
+  - [ ] slotUp
+  - [ ] specialBind
+  - [ ] specialLimit
+  - [ ] specialLock
+  - [ ] specialReverse
+  - [ ] stun
+  - [x] superSwitchReduction
+  - [x] superTyping
+  - [ ] swap
+  - [ ] tapLimit
+  - [ ] tapTiming
+  - [ ] targetLock
+  - [ ] territory
+  - [ ] timingBarrier
+  - [ ] typeUp
+  - [ ] unfavorableSlots
+  - [x] vsReduction
+  - [x] weakness

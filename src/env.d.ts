@@ -86,6 +86,14 @@ interface Window {
 
               }[];
 
+        potential?:
+            | null
+            | undefined
+            | {
+                  Name: string;
+                  description: string[];
+              }[];
+
         special?:
             | string
             | { cooldown: number[], description: string }[]

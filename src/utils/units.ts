@@ -49,6 +49,8 @@ export type Unit = {
         superTurns?: Nullable<number>;
     }>;
 
+    potentials: Nullable<string[]>;
+
     support: Nullable<{ description: string, condition: string }>;
 
 }
@@ -100,6 +102,10 @@ export const Units = {
     getName(unitID: Nullable<number>,
             variant: Nullable<number> = null): Nullable<string> {
         return reconstructName(unitID, variant);
+    },
+
+    getPotentials(unitID: Nullable<number>): string[] {
+        return reconstructPotentials(unitID);
     },
 
     getRarity(unitID: Nullable<number>): Nullable<string> {
@@ -248,6 +254,8 @@ function reconstructUnit(unitID: Nullable<number>,
         superSpecial: reconstructSuperSpecial(unitID, variant),
 
         swap: reconstructSwap(unitID),
+
+        potentials: reconstructPotentials(unitID),
 
         support: reconstructSupport(unitID)
 
@@ -447,7 +455,7 @@ function reconstructSpecial(unitID: Nullable<number>,
 function reconstructSuperSpecial(unitID: Nullable<number>,
                                  variant: Nullable<number> = null): Nullable<{ description: string, condition: string }> {
 
-    if (!unitID) return null
+    if (!unitID) return null;
 
     const data = window.details[unitID];
     if (!data) return null;
@@ -466,7 +474,7 @@ function reconstructSuperSpecial(unitID: Nullable<number>,
 
 function reconstructSwap(unitID: Nullable<number>): Nullable<{ description: string; super?: string; superTurns?: number; }> {
 
-    if (!unitID) return null
+    if (!unitID) return null;
 
     const data = window.details[unitID];
     if (!data?.swap) return null;
@@ -480,9 +488,22 @@ function reconstructSwap(unitID: Nullable<number>): Nullable<{ description: stri
 
 }
 
+function reconstructPotentials(unitID: Nullable<number>): string[] {
+
+    if (!unitID) return [ ];
+
+    const data = window.details[unitID]?.potential;
+    if (!data?.length) return [ ];
+
+    return data
+        .map(p => p.description[p.description.length - 1])
+        .filter(p => !isNullish(p));
+
+}
+
 function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: string, condition: string }> {
 
-    if (!unitID) return null
+    if (!unitID) return null;
 
     const data = window.details[unitID];
     if (!data.support?.length) return null;
