@@ -1,4 +1,4 @@
-import { isArray, isNullish, isString, unique } from 'remeda';
+import { capitalize, isNullish, isString, unique } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
 import { Bulletizer } from '@/utils/bulletizer.ts';
@@ -7,6 +7,7 @@ import { Html } from '@/utils/html.ts';
 
 import type { Team } from '@/types/battles.ts';
 import type { Nullable } from '@/types/utils.ts';
+import type { TeamCompositionIssue } from '@/types/engine.ts';
 
 /**
  *
@@ -60,6 +61,8 @@ import type { Nullable } from '@/types/utils.ts';
 
 const BOOST_REGEX = /boosts\s+(atk|orb effects|color affinity|base atk)(?:\s+and\s+[a-z ]+?)?\s+of\s+(.+?)\s+by\s+/gi;
 
+const POSITION_REGEX = /^(?:the\s+)?(?:top|middle|bottom|left|right)(?:\s+and\s+(?:top|middle|bottom|left|right))?\s+(?:row|column)\s+characters?$/i;
+
 const UNIVERSAL_CAPTAIN_REGEX = /makes all specials that apply class or type restricted buffs/i;
 
 const OTHER_PREFIX_REGEX = /^(?:all\s+)?other\s+/i;
@@ -70,7 +73,7 @@ const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunc
   Exports
   -------*/
 
-export function checkSpecialIssues(team: Nullable<Team>): string[] {
+export function checkSpecialIssues(team: Nullable<Team>): TeamCompositionIssue[] {
     if (!team?.units?.length) return [ ];
     return unique([ 5, 0, 4, 1, 3, 2]
         .map(n => checkSpecial(team, n))
@@ -82,24 +85,21 @@ export function checkSpecialIssues(team: Nullable<Team>): string[] {
   Internals
   ---------*/
 
-// TODO LLB support?
 // TODO Dual special support
 // TODO Multi-stage support?
 function checkSpecial(team: Team,
-                      unitIndex: number): string[] {
+                      unitIndex: number): TeamCompositionIssue[] {
 
-    const hasUniversalCaptain = (
-        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[0]?.id)?.base ?? '') ||
-        UNIVERSAL_CAPTAIN_REGEX.test(Units.getCaptain(team.units[5]?.id)?.base ?? '')
-    );
+    const captain1 = Units.getCaptain(team.units[0]?.id, team.units[0]?.variant, team.units[0]?.llbLevel ?? 0);
+    const captain2 = Units.getCaptain(team.units[5]?.id, team.units[5]?.variant, team.units[5]?.llbLevel ?? 0);
+    const hasUniversalCaptain = (UNIVERSAL_CAPTAIN_REGEX.test(captain1 ?? '') || UNIVERSAL_CAPTAIN_REGEX.test(captain2 ?? ''));
     if (hasUniversalCaptain) return [ ];
 
     const launcher = team.units[unitIndex];
     if (!launcher?.id) return [ ];
 
-    const special = Units.getSpecial(launcher.id, launcher.variant);
-    const ability = isArray(special?.base) ? special.base[special.base.length - 1] : special?.base;
-    const description = ability?.description;
+    const special = Units.getSpecial(launcher.id, launcher.variant, launcher.llbLevel ?? 0);
+    const description = special[special.length - 1]?.description;
     if (!isString(description)) return [ ];
 
     // A buff can be applied to different tagets by different bullets and
@@ -114,28 +114,36 @@ function checkSpecial(team: Team,
         }
     }
 
-    const result: string[] = [ ];
+    const buffer: Map<number, string[]> = new Map();
     for (const [ buff, targets ] of groupedBuffs) {
-        const unboostedUnits = unique(calculateUnboostedUnits(team, unitIndex, targets));
-        if (unboostedUnits.length > 0)
-            result.push(`${ Html.decorateUnit(launcher.id, launcher.variant) } does not boost ${ formatBuff(buff) } for ${ LIST_FORMATTER.format(unboostedUnits) }`);
+        const unboostedUnits = calculateUnboostedUnits(team, unitIndex, targets);
+        for (let index of unboostedUnits) {
+            if (!buffer.has(index)) buffer.set(index, [ buff ]);
+            else buffer.get(index)!!.push(buff);
+        }
     }
 
-    return postProcessResults(result);
+    const result: TeamCompositionIssue[] = [ ];
+    for (let entry of buffer.entries()) {
+        const [ index, buffs ] = entry;
+        result.push({
+            index,
+            issue: capitalize(`${ LIST_FORMATTER.format(buffs.map(formatBuff)) } not boosted by ${ Html.decorateUnit(launcher.id, launcher.variant) }`)
+        });
+
+    }
+    return result;
 
 }
 
 function calculateUnboostedUnits(team: Team,
                                  launcherIndex: number,
-                                 targets: string[]): string[] {
+                                 targets: string[]): number[] {
     return [ 5, 0, 4, 1, 3, 2]
-        .map(unitIndex => {
+        .filter(unitIndex => {
             const unit = team.units[unitIndex];
-            if (!!unit?.id && !isBoosted(team, unitIndex, launcherIndex, targets))
-                return Html.decorateUnit(unit.id, unit.variant);
-            return null
-        })
-        .filter(u => !isNullish(u));
+            return !!unit?.id && !isBoosted(team, unitIndex, launcherIndex, targets);
+        });
 }
 
 function isBoosted(team: Team,
@@ -146,7 +154,9 @@ function isBoosted(team: Team,
     return targets.some(target => {
         if (/^this characters?$/i.test(target))
             return launcherIndex === unitIndex;
-        if (OTHER_PREFIX_REGEX.test(target) && launcherIndex === unitIndex)
+        else if (POSITION_REGEX.test(target))
+              return true;
+        else if (OTHER_PREFIX_REGEX.test(target) && launcherIndex === unitIndex)
             return false;
         else
             return Criteria.parseCriteria(target.replace(OTHER_PREFIX_REGEX, ''))(unit.id, unit.variant);
@@ -161,39 +171,4 @@ function formatBuff(buff: string): string {
         case 'base atk': return 'base ATK';
         default: return buff;
     }
-}
-
-// TODO Merge into main processing somehow
-function postProcessResults(results: string[]): string[] {
-
-    const mappedAccumulator: Record<string, string[]> = { };
-    const unmappedAccumulator: string[] = [ ];
-
-    for (let result of results) {
-
-        const match = result.match(/^(.+) does not boost (.+) for (.+)$/i);
-        if (!match) {
-            unmappedAccumulator.push(result);
-            continue;
-        }
-
-        const [ _, source, effect, target ] = match;
-        const key = `${ source }@@@${ target }`;
-
-        if (!mappedAccumulator[key]) mappedAccumulator[key] = [ effect ];
-        else mappedAccumulator[key].push(effect);
-
-    }
-
-    return [
-
-        ...Object.entries(mappedAccumulator).map(([ key, value ]) => {
-            const [ source, target ] = key.split('@@@');
-            return `${ source } does not boost ${ LIST_FORMATTER.format(value) } for ${ target }`;
-        }),
-
-        ...unmappedAccumulator
-
-    ];
-
 }

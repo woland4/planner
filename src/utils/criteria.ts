@@ -1,7 +1,8 @@
 import { isNullish } from 'remeda';
 
-import type { Nullable } from '@/types/utils.ts';
 import { Units } from '@/utils/units.ts';
+
+import type { Nullable } from '@/types/utils.ts';
 
 /*---------
   Constants
@@ -53,7 +54,7 @@ const COST_PATTERNS: CostPattern[] = [
   Types
   -----*/
 
-export type CriteriaCheck = (unitID: number | string, variant: Nullable<number>) => boolean;
+export type CriteriaCheck = (unitID: number, variant: Nullable<number>) => boolean;
 
 type CostPattern = {
     regex: RegExp;
@@ -126,8 +127,8 @@ function parseCostCriteria(criteria: string): Nullable<{ check: CriteriaCheck, m
         if (!match) continue;
 
         const ranges = pattern.ranges(match);
-        const check: CriteriaCheck = (unitID, variant) => {
-            const cost = Units.getCost(unitID, variant);
+        const check: CriteriaCheck = (unitID) => {
+            const cost = Units.getCost(unitID);
             if (isNullish(cost)) return false;
             return ranges.some(r => cost >= (r.min ?? Number.MIN_SAFE_INTEGER) && cost <= (r.max ?? Number.MAX_SAFE_INTEGER));
         };

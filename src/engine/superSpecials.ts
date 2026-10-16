@@ -1,11 +1,11 @@
-import { isNullish, unique } from 'remeda';
+import { isNullish } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
 import { Bulletizer } from '@/utils/bulletizer.ts';
 import { Criteria } from '@/utils/criteria.ts';
-import { Html } from '@/utils/html.ts';
 
-import type { Team, TeamUnit } from '@/types/battles.ts';
+import type { Team } from '@/types/battles.ts';
+import type { TeamCompositionIssue } from '@/types/engine.ts';
 import type { Nullable } from '@/types/utils.ts';
 
 /**
@@ -89,34 +89,34 @@ const KNOWN_BULLETS = [
   Exports
   -------*/
 
-export function checkSuperSpecialIssues(team: Nullable<Team>): string[] {
+export function checkSuperSpecialIssues(team: Nullable<Team>): TeamCompositionIssue[] {
     if (!team?.units?.length) return [ ];
-    return unique(team.units
-        .map((u, n) => checkSuperSpecial(u, n === 0 || n === 5, team))
-        .filter(i => !isNullish(i)));
+    return [ 5, 0, 4, 1, 3, 2]
+        .map(index => checkSuperSpecial(index, team))
+        .filter(i => !isNullish(i));
 }
 
 /*---------
   Internals
   ---------*/
 
-// TODO LLB support?
-function checkSuperSpecial(unit: Nullable<TeamUnit>,
-                           isCaptain: boolean,
-                           team: Team): Nullable<string> {
+function checkSuperSpecial(unitIndex: number,
+                           team: Team): Nullable<TeamCompositionIssue> {
 
+    const unit = team.units?.[unitIndex];
     if (!unit?.id) return null;
 
-    const condition = Units.getSuperSpecial(unit.id, unit.variant)?.criteria;
+    const condition = Units.getSuperSpecial(unit.id, unit.variant)?.condition;
     if (!condition) return null;
 
+    const isCaptain = unitIndex === 0 || unitIndex === 5;
     const sanitizedCondition = condition.replace(/when character becomes.+?during captain shift and/i, '');
     const bullets = Bulletizer.split(sanitizedCondition);
     if (bullets.some(b => /must be captain/i.test(b)) && !isCaptain) return null;
 
     const targetBullets = bullets.filter(b => /crew must consist/i.test(b));
     if (!targetBullets?.length)
-        return `${ Html.decorateUnit(unit.id, unit.variant) } *may* not meet the conditions for its super special, manual checking is required`;
+        return { index: unitIndex, issue: 'Conditions *may* not be met, check manually' };
 
     let result: ClauseResult = 'met';
     for (const targetBullet of targetBullets) {
@@ -140,9 +140,9 @@ function checkSuperSpecial(unit: Nullable<TeamUnit>,
     if (result === 'met')
         return null;
     else if (result === 'unmet')
-        return `${ Html.decorateUnit(unit.id, unit.variant) } does not meet the conditions for its super special`;
+        return { index: unitIndex, issue: 'Conditions are not met' };
     else
-        return `${ Html.decorateUnit(unit.id, unit.variant) } *may* not meet the conditions for its super special, manual checking is required`;
+        return { index: unitIndex, issue: 'Conditions *may* not be met, check manually' };
 
 }
 

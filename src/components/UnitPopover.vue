@@ -1,13 +1,12 @@
 <script setup lang="ts">
     import { computed } from 'vue';
-    import { isArray, isNullish } from 'remeda';
+    import { isNullish } from 'remeda';
     import DOMPurify from 'dompurify';
 
-    import { type BaseSpecial, type Swap, Units } from '@/utils/units.ts';
     import { Bulletizer } from '@/utils/bulletizer.ts';
 
     import type { Nullable } from '@/types/utils.ts';
-    import { Numbers } from '@/utils/numbers.ts';
+    import { type Unit, Units } from '@/utils/units.ts';
 
     /*-----
       Types
@@ -29,101 +28,108 @@
       -----*/
 
     const props = defineProps<{
+
         unitId: number,
         variant?: Nullable<number>,
-        hideCaptain?: boolean,
+        llbLevel?: Nullable<number>;
+
         index?: Nullable<number>,
-        assumeLlb?: Nullable<boolean>,
+
+        hideCaptain?: boolean,
         support?: Nullable<boolean>,
-        shift?: Nullable<boolean>
+
+        insideModal?: Nullable<boolean>
+
+
     }>();
 
     /*--------
       Computed
       --------*/
 
+    const unit = computed<Nullable<Unit>>(() => Units.getUnit(props.unitId, props.variant, props.llbLevel ?? 0));
+
     const sections = computed<Section[]>(() => {
-
         if (props.support)
-            return supports.value;
-
-        const result: Nullable<Section>[] = [ ];
-        if (!props.hideCaptain)
-            result.push(...captains.value);
-        result.push(...specials.value);
-        result.push(...swaps.value);
-        result.push(...superSpecials.value);
-        return result.filter(r => !isNullish(r));
-
+            return supportSection.value ? [ supportSection.value ] : [{ title: 'Support', contents: 'Nope.' }];
+        else {
+            return [
+                props.hideCaptain ? null : captainSection.value,
+                ...specialSections.value,
+                swapSection.value,
+                superSpecialSection.value,
+            ].filter(r => !isNullish(r));
+        }
     });
 
-    const captains = computed<Section[]>(() => {
+    const captainSection = computed<Nullable<Section>>(() => {
+        if (!unit.value?.captain)
+            return null;
+        return {
+            title: 'Captain Ability',
+            contents: generateContents(unit.value.captain)
+        };
+    });
 
-        const data = Units.getCaptain(props.unitId, props.variant, !!props.assumeLlb);
-        if (!data?.base) return [ ];
-
-        const result: Section[] = [{ title: 'Captain Ability', contents: prepareContents(data.base) }];
-        if (data.combined)
-            result.push({ title: 'Captain Ability (combined)', contents: prepareContents(data.combined) });
+    const specialSections = computed<Section[]>(() => {
+        if (!unit.value?.id || !unit.value?.special?.length)
+            return [ ];
+        const result: Section[] = [ generateSpecialSection('Special', unit.value.special) ];
+        if (unit.value.variant && Units.isDual(unit.value.id)) {
+            const combined = Units.getSpecial(unit.value.id, 0, props.llbLevel ?? 0);
+            const combinedSection = generateSpecialSection('Combined Special', combined);
+            if (combinedSection.contents !== result[0].contents)
+                result.push(combinedSection);
+        }
         return result;
-
     });
 
-    const specials = computed<Section[]>(() => {
-
-        const data = Units.getSpecial(props.unitId, props.variant, !!props.assumeLlb);
-        if (!data?.base) return [ ];
-
-        const result: Section[] = [ convertSpecial(data.base, false) ];
-        if (data.combined) result.push(convertSpecial(data.combined, true));
-        return result;
-
+    const swapSection = computed<Nullable<Section>>(() => {
+        if (!unit.value?.swap || !unit.value.variant)
+            return null;
+        else if (!unit.value.swap.super) {
+            return {
+                title: 'Switch',
+                contents: generateContents(unit.value.swap.description)
+            };
+        } else {
+            const turns = unit.value.swap.superTurns ? ' (' + unit.value.swap.superTurns + ' turns)' : '';
+            return {
+                title: 'Switch',
+                contents: (
+                    generateHeader('Normal') +
+                    generateContents(unit.value.swap.description) +
+                    generateHeader('Super' + turns) +
+                    generateContents(unit.value.swap.super)
+                )
+            };
+        }
     });
 
-    const swaps = computed<Section[]>(() => {
-
-        const data = Units.getSwap(props.unitId);
-        if (!data?.base) return [ ];
-
-        const contents = prepareSwap(data);
-        return (contents ? [{ title: 'Switch', contents }] : [ ]);
-
+    const superSpecialSection = computed<Nullable<Section>>(() => {
+        if (!unit.value?.superSpecial)
+            return null;
+        return {
+            title: 'Super Special',
+            contents: (
+                generateContents(unit.value.superSpecial.description) +
+                generateHeader('Condition') +
+                generateContents(unit.value.superSpecial.condition)
+            )
+        };
     });
 
-    const superSpecials = computed<Section[]>(() => {
-
-        const data = Units.getSuperSpecial(props.unitId, props.variant);
-        if (!data?.base) return [ ];
-
-        return [
-            {
-                title: 'Super Special',
-                contents: [
-                    prepareContents(data.base),
-                    header('Criteria'),
-                    prepareContents(data.criteria)
-                ].join('')
-            }
-        ];
-
-    });
-
-    const supports = computed<Section[]>(() => {
-
-        const data = Units.getSupport(props.unitId);
-        if (!data?.base) return [{ title: 'Support', contents: 'Nope.' }];
-
-        return [
-            {
-                title: 'Support',
-                contents: [
-                    prepareContents(data.base),
-                    header('Criteria'),
-                    prepareContents(data.criteria)
-                ].join('')
-            }
-        ];
-
+    const supportSection = computed<Nullable<Section>>(() => {
+        if (!unit.value?.support)
+            return null;
+        return {
+            title: 'Support',
+            contents: (
+                generateContents(unit.value.support.description) +
+                generateHeader('Condition') +
+                generateContents(unit.value.support.condition)
+            )
+        };
     });
 
     const sanitizedIndex = computed(() => {
@@ -141,7 +147,11 @@
       Methods
       -------*/
 
-    function prepareContents(value: Nullable<string>) {
+    function generateHeader(value: string): string {
+        return `<div class="font-bold border-b border-default border-dashed">${ value }</div>`;
+    }
+
+    function generateContents(value: Nullable<string>) {
 
         if (!value) return null;
         const sanitized = DOMPurify.sanitize(value);
@@ -155,77 +165,48 @@
             .replace(/\[TND]/gi, '<span class="text-orange-800 font-bold">TND</span>')
             .replace(/(Fighter|Slasher|Striker|Shooter|Free Spirit|Driven|Powerhouse|Cerebral)/gi, '<span class="font-bold">$1</span>')
             .replace(/\[(BLOCK|BOMB|EMPTY|G|PARALYSIS|POISON|RAINBOW|RCV|SEMLA|SUPERBLOCK|SUPERBOMB|WANO)]/gi, '<span class="font-bold">$1</span>')
-            .replace(/\[([a-zA-Z -]+)]/gi, '<span class="font-bold px-[2px] text-[10.5px] bg-orange-300 text-black rounded-[3px]">$1</span>');
+            .replace(/\[([a-zA-Z -\d]+)]/gi, '<span class="font-bold px-[2px] text-[10.5px] bg-orange-300 text-black rounded-[3px]">$1</span>');
 
         return Bulletizer.bulletize(decorated);
 
     }
 
-    function convertSpecial(value: BaseSpecial | BaseSpecial[],
-                            isCombined: boolean = false): Section {
+    function generateSpecialSection(title: string,
+                                    special: { description: string, turns: Nullable<number> }[]): Section {
 
-        if (!isArray(value)) {
-
-            const data = value as BaseSpecial;
-
-            const qualifiers = [ ];
-            if (isCombined) qualifiers.push('combined');
-            if (Numbers.isPositiveInteger(data.cooldown)) qualifiers.push(data.cooldown + ' turns');
-
+        // Single-stage
+        if (special.length < 2) {
             return {
-                title: 'Special' + (qualifiers.length ? ' (' + qualifiers.join(', ') + ')' : ''),
-                contents: prepareContents(value.description)
+                title: title + (special[0].turns ? ' (' + special[0].turns + ' turns)' : ''),
+                contents: generateContents(special[0].description)
             };
-
         }
 
-        else {
-            const lines = [ ];
-            for (let i=0; i<value.length; ++i) {
-                lines.push(header(`Stage ${ i + 1 } (${ value[i].cooldown } turns)`));
-                lines.push(prepareContents(value[i].description));
-            }
-            return { title: 'Special', contents: lines.join('') };
+        // Multi-stage
+        const lines = [ ];
+        for (let i=0; i<special.length; ++i) {
+            lines.push(generateHeader(`Stage ${ i + 1 } (${ special[i].turns ?? '???' } turns)`));
+            lines.push(generateContents(special[i].description));
         }
+        return { title, contents: lines.join('') };
 
-    }
-
-    function prepareSwap(value: Swap): Nullable<string> {
-        if (!value.super)
-            return prepareContents(value.base);
-        else {
-
-            const lines = [ ];
-            lines.push(header('Normal'));
-            lines.push(prepareContents(value.base));
-
-            const turns = value.superTurns ? ' (' + value.superTurns + ' turns)' : '';
-            lines.push(header('Super' + turns));
-            lines.push(prepareContents(value.super));
-
-            return lines.join('');
-
-        }
-    }
-
-    function header(value: string): string {
-        return `<div class="font-bold border-b border-default border-dashed">${ value }</div>`;
     }
 </script>
 
 <template>
-    <div class="unit-popover flex flex-col max-w-100 p-3 text-sm">
+    <div v-if="unit?.id"
+         class="unit-popover flex flex-col max-w-100 p-3 text-sm">
 
         <!-- Header (always visible) -->
 
         <div class="flex items-baseline gap-1.5 pb-0.5">
 
             <span class="shrink-0 text-xs text-dimmed tabular-nums">
-                #{{ props.unitId }}
+                #{{ unit.id }}
             </span>
 
             <span class="font-bold text-highlighted truncate">
-                {{ Units.getName(props.unitId, props.variant) }}
+                {{ unit.name }}
             </span>
 
         </div>
@@ -235,12 +216,12 @@
         <div v-if="!props.support"
              class="flex flex-wrap items-center gap-1 pb-1 border-b border-default">
 
-            <span v-for="clazz in Units.getClasses(props.unitId, props.variant)"
+            <span v-for="clazz in unit.classes ?? [ ]"
                   :key="clazz"
                   :class="[ 'optc-icon', clazz.toLowerCase() ]"
                   class="w-3.5 h-3.5" />
 
-            <UBadge v-for="tag in Units.getTags(props.unitId, props.variant)"
+            <UBadge v-for="tag in unit.tags ?? [ ]"
                     :key="tag"
                     size="sm"
                     color="info"
@@ -268,9 +249,10 @@
         <div v-if="!props.support"
              class="flex items-center gap-1.5 pt-1 mt-1.25 border-t border-default">
 
-            <span class="flex gap-1.25 items-center text-xs text-dimmed">
+            <span v-if="props.insideModal"
+                  class="flex gap-1.25 items-center text-xs text-dimmed">
 
-                <span :class="{ 'font-bold text-red-500': props.assumeLlb }">{{ props.assumeLlb ? 'LLB' : 'Base' }}</span>
+                <span :class="{ 'font-bold text-red-500': props.llbLevel }">{{ props.llbLevel ? 'LLB5' : 'LLB0' }}</span>
 
                 / right click to change
 
@@ -278,7 +260,7 @@
 
             <span v-if="sections.length > 1"
                   class="ml-auto shrink-0 text-[11px] text-dimmed tabular-nums">
-                {{ props.shift ? 'Shift + scroll' : 'Scroll' }} to cycle, {{ sanitizedIndex + 1 }} / {{ sections.length }}
+                {{ props.insideModal ? 'Shift + scroll' : 'Scroll' }} to cycle, {{ sanitizedIndex + 1 }} / {{ sections.length }}
             </span>
 
         </div>

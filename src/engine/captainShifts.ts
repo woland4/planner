@@ -1,9 +1,9 @@
 import { isNullish } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
-import { Html } from '@/utils/html.ts';
 
 import type { Team, TeamUnit } from '@/types/battles.ts';
+import type { TeamCompositionIssue } from '@/types/engine.ts';
 import type { Nullable } from '@/types/utils.ts';
 
 /**
@@ -25,7 +25,7 @@ import type { Nullable } from '@/types/utils.ts';
   Exports
   -------*/
 
-export function checkCaptainShiftIssues(team: Nullable<Team>): string[] {
+export function checkCaptainShiftIssues(team: Nullable<Team>): TeamCompositionIssue[] {
     if (!team?.units?.length) return [ ];
     return team.units
         .map((u, n) => checkCaptainShift(u, n))
@@ -37,11 +37,11 @@ export function checkCaptainShiftIssues(team: Nullable<Team>): string[] {
   ---------*/
 
 function checkCaptainShift(unit: Nullable<TeamUnit>,
-                           unitIndex: number): Nullable<string> {
+                           unitIndex: number): Nullable<TeamCompositionIssue> {
 
     if (!unit?.id) return null;
 
-    const condition = Units.getSwap(unit.id)?.base;
+    const condition = Units.getSwap(unit.id)?.description;
     if (!condition) return null;
 
     const matches = condition.match(/is your (middle|bottom).(left|right)/);
@@ -55,6 +55,6 @@ function checkCaptainShift(unit: Nullable<TeamUnit>,
     if (requiredIndex === unitIndex)
         return null;
     else
-        return `${ Html.decorateUnit(unit.id, unit.variant) } is not in the correct position for captain shift`;
+        return { index: unitIndex, issue: 'Is not in the correct position for captain shift' };
 
 }

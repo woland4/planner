@@ -34,20 +34,76 @@ interface Window {
             | null
             | undefined
             | {
-                    captain?: Record<string, string>;
-                    sailor?: Record<string, string>;
-                    special?: Record<string, string | { cooldown: number[], description: string }[]>;
+
+                    captain?: {
+
+                        base?: string; // Single unit
+
+                        level1?: string; // Single unit, LB1
+                        level2?: string; // Single unit, LB2
+                        level3?: string; // Single unit, LB3
+                        level4?: string; // Single unit, LB4
+                        level5?: string; // Single unit, LB5
+                        level6?: string; // Single unit, LB6
+
+                        character1?: string; // Dual/VS variant 1
+                        character2?: string; // Dual/VS variant 2
+                        combined?: string; // Dual combined
+
+                    };
+
+                    sailor?: {
+
+                        level1?: string; // Single unit, LB1
+                        level2?: string; // Single unit, LB2
+                        level3?: string; // Single unit, LB3
+                        level4?: string; // Single unit, LB4
+                        level5?: string; // Single unit, LB5
+                        level6?: string; // Single unit, LB6
+
+                        character1?: string; // Dual/VS variant 1
+                        character2?: string; // Dual/VS variant 2
+                        combined?: string; // Dual combined
+
+                    };
+
+                    special?: {
+
+                        base?: string | { cooldown: number[], description: string }[]; // Single unit
+
+                        level1?: string | { cooldown: number[], description: string }[]; // Single unit, LB1
+                        level2?: string | { cooldown: number[], description: string }[]; // Single unit, LB2
+                        level3?: string | { cooldown: number[], description: string }[]; // Single unit, LB3
+                        level4?: string | { cooldown: number[], description: string }[]; // Single unit, LB4
+                        level5?: string | { cooldown: number[], description: string }[]; // Single unit, LB5
+                        level6?: string | { cooldown: number[], description: string }[]; // Single unit, LB6
+
+                        character1?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 1
+                        character2?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 2
+                        combined?: string | { cooldown: number[], description: string }[]; // Dual combined
+
+                    }
+
               }[];
 
         special?:
             | string
             | { cooldown: number[], description: string }[]
             | {
+
                     base?: string | { cooldown: number[], description: string }[]; // Single unit
+
                     level1?: string | { cooldown: number[], description: string }[]; // Single unit, LB1
+                    level2?: string | { cooldown: number[], description: string }[]; // Single unit, LB2
+                    level3?: string | { cooldown: number[], description: string }[]; // Single unit, LB3
+                    level4?: string | { cooldown: number[], description: string }[]; // Single unit, LB4
+                    level5?: string | { cooldown: number[], description: string }[]; // Single unit, LB5
+                    level6?: string | { cooldown: number[], description: string }[]; // Single unit, LB6
+
                     character1?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 1
                     character2?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 2
                     combined?: string | { cooldown: number[], description: string }[]; // Dual combined
+
               };
 
         superSpecial?: Nullable<string>;

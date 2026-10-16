@@ -1,7 +1,6 @@
 <script setup lang="ts">
     import { computed } from 'vue';
-
-    import { Html } from '@/utils/html.ts';
+    import { groupBy, isFunction, isString, sortBy, uniqueBy } from 'remeda';
 
     import { useStore } from '@/store.ts';
     import { useResponsiveness } from '@/utils/responsiveness.ts';
@@ -12,11 +11,10 @@
     import { checkCaptainShiftIssues } from '@/engine/captainShifts.ts';
     import { checkGimmicks } from '@/engine/gimmicks.ts';
 
-    import { GimmickRegistry } from '@/utils/registry.ts';
+    import { Html } from '@/utils/html.ts';
+    import { Gimmicks } from '@/utils/gimmicks.ts';
 
-    import type { GimmickType } from '@/types/enums.ts';
-    import type { Stage } from '@/types/battles.ts';
-    import type { GimmickCheckStatus } from '@/types/engine.ts';
+    import type { Nullable } from '@/types/utils.ts';
 
     /*-----
       Types
@@ -29,13 +27,21 @@
 
     type IssueSet = {
 
-        tag?: string;
-        tagColor?: 'info' | 'success' | 'warning' | 'error';
+        title: string;
+        icon?: string;
+        badge?: string;
+        badgeColor?: 'info' | 'success' | 'warning' | 'error';
 
-        gimmick?: GimmickType;
-        gimmickStatus?: GimmickCheckStatus;
+        details: IssueDetail[];
 
-        contents: string[];
+    };
+
+    type IssueDetail = {
+
+        badge?: string;
+        badgeColor?: 'info' | 'success' | 'warning' | 'error';
+
+        text: string;
 
     };
 
@@ -50,69 +56,117 @@
       Computed
       --------*/
 
+    const teamCompositionIssues = computed<{ name: string, issues: IssueDetail[] }[]>(() => {
+
+        const team = store.currentTab?.team;
+        if (!team?.units?.length) return [ ];
+
+        const data = uniqueBy([
+            ...checkCaptainIssues(store.currentTab?.team)
+                .map(issue => ({ ...issue, badge: 'CAPTAIN' })),
+            ...checkSpecialIssues(store.currentTab.team)
+                .map(issue => ({ ...issue, badge: 'SPECIAL' })),
+            ...checkSuperSpecialIssues(store.currentTab.team)
+                .map(issue => ({ ...issue, badge: 'SUPER' })),
+            ...checkCaptainShiftIssues(store.currentTab.team)
+                .map(issue => ({ ...issue, badge: 'SHIFT' }))
+        ], issue => {
+            const unit = team.units[issue.index];
+            return `${ unit?.id }/${ unit?.variant ?? 0 }/${ issue.issue }`
+        });
+
+        const sorted = sortBy(data,
+            d => [ 5, 0, 4, 1, 3, 2 ].indexOf(d.index),
+            d => [ 'CAPTAIN', 'SPECIAL', 'SUPER', 'SHIFT' ].indexOf(d.badge)
+        );
+
+        const groups = groupBy(sorted, i => i.index);
+
+        return Object.entries(groups).map(([ key, issues ]) => {
+
+            const index = parseInt(key, 10);
+            const unit = team.units[index]!!;
+
+            return {
+                name: Html.decorateUnit(unit.id, unit.variant)!!,
+                issues: issues.map(i => ({
+                    badge: i.badge,
+                    badgeColor: getTeamCompBadgeColor(i.badge),
+                    text: i.issue
+                }))
+            };
+
+        });
+
+    });
+
+    const stageIssues = computed<IssueGroup[]>(() => {
+
+        const stages = store.currentTab?.battle?.stages ?? [ ];
+        if (!stages?.length) return [ ];
+
+        const result: IssueGroup[] = [ ];
+
+        for (let n=0; n<stages.length; ++n) {
+
+            const items = checkGimmicks(stages[n], store.currentTab?.team)
+                .filter(r => r.status !== 'ignored');
+            if (!items.length)
+                continue;
+
+            result.push({
+                title: `Stage ${ n + 1 }`,
+                issues: items.map(i => {
+                    const data = Gimmicks.getGimmickDetails(i.gimmick.type);
+                    return {
+                        title: isString(data?.label) ? data.label : (isFunction(data?.label) ? data.label(i.gimmick) : i.gimmick.type),
+                        icon: isString(data?.icon) ? data.icon : (isFunction(data?.icon) ? data.icon(i.gimmick) : undefined),
+                        badge: i.status === 'advisory' ? undefined : i.status.toUpperCase(),
+                        badgeColor: i.status === 'handled' ? 'success' : 'error',
+                        details: (i.details ?? [ ]).map(text => ({ text }))
+                    };
+                })
+            });
+
+        }
+
+        return result;
+
+    });
+
     const issues = computed<IssueGroup[]>(() => {
         return [
 
             {
-                title: 'Team Composition',
-                issues: [
-
-                    {
-                        tag: 'CAPTAINS',
-                        contents: checkCaptainIssues(store.currentTab?.team)
-                    },
-
-                    {
-                        tag: 'SPECIALS',
-                        tagColor: 'error' as const,
-                        contents: checkSpecialIssues(store.currentTab?.team)
-                    },
-
-                    {
-                        tag: 'SUPER SPECIALS',
-                        tagColor: 'warning' as const,
-                        contents: checkSuperSpecialIssues(store.currentTab?.team)
-                    },
-
-                    {
-                        tag: 'CAPTAIN SHIFTS',
-                        tagColor: 'success' as const,
-                        contents: checkCaptainShiftIssues(store.currentTab?.team)
-                    }
-
-                ].filter(g => g?.contents?.length ?? 0 > 0)
+                title: 'Team Composition Issues',
+                issues: teamCompositionIssues.value.map(issue => ({
+                    title: issue.name,
+                    details: issue.issues
+                }))
             },
 
-            ...(store.currentTab?.battle?.stages ?? [ ]).flatMap((stage: Stage, n: number) => {
+            ...stageIssues.value
 
-                const gimmickIssues = checkGimmicks(stage, store.currentTab?.team)
-                    .filter(r => r.status !== 'ignored')
-                    .map(r => ({
-                        gimmick: r.gimmick.type,
-                        gimmickStatus: r.status,
-                        contents: r.details ?? [ ]
-                    }));
-
-                if (!gimmickIssues.length)
-                    return [ ];
-                else {
-                    return [{
-                        title: `Stage ${ n + 1 }`,
-                        issues: gimmickIssues
-                    }];
-                }
-
-            })
-
-        ].filter(g => g?.issues?.length ?? 0 > 0);
+        ].filter(r => r?.issues?.length > 0);
     });
 
     /*-------
       Methods
       -------*/
 
-    function formatIssue(issue: string): string {
+    function formatIssue(issue: Nullable<string>): string {
+        if (!issue?.length) return '';
         return Html.textToHTML(issue);
+    }
+
+    function getTeamCompBadgeColor(tag: string): IssueDetail['badgeColor'] {
+        switch (tag) {
+            case 'CAPTAIN': return 'error';
+            case 'SPECIAL': return 'info';
+            case 'SUPER': return 'success';
+            case 'SHIFT': return 'warning';
+            default: return 'info';
+        }
     }
 </script>
 
@@ -145,52 +199,39 @@
                 <template v-for="(issueSet,m) in group.issues"
                           :key="m">
 
-                    <template v-if="!issueSet.gimmick">
+                    <span class="flex items-center gap-1.25">
 
-                        <USeparator v-if="issueSet.tag"
-                                    class="my-1">
-                            <UBadge v-if="issueSet.tag"
-                                    :color="issueSet.tagColor ?? 'info'"
+                        <span v-if="issueSet.icon"
+                              :class="issueSet.icon"
+                              class="optc-icon w-3.5 h-3.5" />
+
+                        <span v-html="formatIssue(issueSet.title)" />
+
+                        <UBadge v-if="issueSet.badge"
+                                :color="issueSet.badgeColor ?? 'info'"
+                                size="xs"
+                                class="font-bold">
+                            {{ issueSet.badge }}
+                        </UBadge>
+
+                    </span>
+
+                    <ul class="list-disc pl-6.75">
+                        <li v-for="(issue,j) in issueSet.details"
+                            :key="j">
+
+                            <UBadge v-if="issue.badge"
+                                    :color="issue.badgeColor ?? 'info'"
                                     size="xs"
-                                    class="font-bold">
-                                {{ issueSet.tag }}
-                            </UBadge>
-                        </USeparator>
-
-                        <ul class="list-disc pl-4">
-                            <li v-for="(issue,j) in issueSet.contents"
-                                v-html="formatIssue(issue)"
-                                :key="j" />
-                        </ul>
-
-                    </template>
-
-                    <template v-else>
-
-                        <span class="flex items-center gap-1.25">
-                            <span :class="GimmickRegistry[issueSet.gimmick].icon ?? issueSet.gimmick"
-                                  class="optc-icon w-3.5 h-3.5" />
-
-                            <strong>
-                                {{ GimmickRegistry[issueSet.gimmick].label }}
-                            </strong>
-
-                            <UBadge v-if="issueSet.gimmickStatus && issueSet.gimmickStatus !== 'advisory'"
-                                    :color="issueSet.gimmickStatus === 'handled' ? 'success' : 'error'"
-                                    size="xs"
-                                    class="font-bold">
-                                {{ issueSet.gimmickStatus === 'handled' ? 'HANDLED' : 'NOT HANDLED' }}
+                                    variant="subtle"
+                                    class="font-bold mr-1 pt-0 pb-px min-w-11 justify-center">
+                                {{ issue.badge }}
                             </UBadge>
 
-                        </span>
+                            <span v-html="formatIssue(issue.text)" />
 
-                        <ul class="list-disc pl-6.75">
-                            <li v-for="(issue,j) in issueSet.contents"
-                                v-html="formatIssue(issue)"
-                                :key="j" />
-                        </ul>
-
-                    </template>
+                        </li>
+                    </ul>
 
                 </template>
             </UCard>

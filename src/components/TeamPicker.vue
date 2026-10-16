@@ -8,6 +8,7 @@
     import UnitThumbnail from '@/components/UnitThumbnail.vue';
 
     import { Battles } from '@/utils/battles.ts';
+    import { Units } from '@/utils/units.ts';
 
     import type { Booster, Team } from '@/types/battles.ts';
     import type { Nullable } from '@/types/utils.ts';
@@ -42,7 +43,7 @@
     const dragStart = ref<Nullable<number>>(null);
     const dragCurrent = ref<Nullable<number>>(null);
 
-    const popoverData = useSessionStorage<Record<string, { index?: number, llb?: boolean }>>('picker.popovers', { });
+    const popoverData = useSessionStorage<Record<string, { index?: number }>>('picker.popovers', { });
 
     /*-------
       Methods
@@ -59,13 +60,15 @@
         model.value.units[templateIndexToTeamIndex(templateIndex)] = null;
     }
 
-    function onUnitRightClick(templateIndex: number) {
+    function onUnitLlbClick(templateIndex: number) {
 
-        const fullID = getUnitFullID(templateIndex);
-        if (!fullID) return;
+        const unit = model.value.units[templateIndexToTeamIndex(templateIndex)];
+        if (!unit) return;
 
-        if (!Object.hasOwn(popoverData.value, fullID)) popoverData.value[fullID] = { };
-        popoverData.value[fullID].llb = !popoverData.value[fullID].llb;
+        const llbLevels = [ 0, ...Units.getLlbLevels(unit.id) ];
+        const index = llbLevels.indexOf(unit.llbLevel ?? 0);
+        if (index === -1) unit.llbLevel = 0;
+        else unit.llbLevel = llbLevels[(index + 1) % llbLevels.length];
 
     }
 
@@ -143,6 +146,10 @@
         return model.value.units[templateIndexToTeamIndex(templateIndex)]?.variant ?? null;
     }
 
+    function getUnitLlbLevel(templateIndex: number): number {
+        return model.value.units[templateIndexToTeamIndex(templateIndex)]?.llbLevel ?? 0;
+    }
+
     function templateIndexToTeamIndex(templateIndex: number): number {
         switch (templateIndex) {
             case 1: return 5;
@@ -166,8 +173,10 @@
              :class="{ over: dragCurrent === n }"
              class="slot relative">
 
+            <!-- Main -->
+
             <div :class="{ empty: !hasUnit(n), filled: hasUnit(n), supported: hasSupport(n) }"
-                 class="unit w-28 h-28 flex flex-row justify-center items-center cursor-pointer text-white/30 rounded-[5px]"
+                 class="unit relative w-28 h-28 flex flex-row justify-center items-center cursor-pointer text-white/30 rounded-[5px]"
                  draggable
                  @dragstart="e => onDragStart(e, n)"
                  @dragover.prevent="dragCurrent = n"
@@ -176,21 +185,35 @@
                  @dragend="onDragEnd"
                  @click="onUnitClick(n)"
                  @click.middle.prevent="onUnitMiddleClick(n)"
-                 @click.right.prevent.stop="onUnitRightClick(n)"
                  @wheel.prevent="onUnitWheel(n, $event)">
 
                 <template v-if="!hasUnit(n)">
                     Click to add
                 </template>
 
-                <UnitThumbnail v-else
-                               :unit-id="getUnitID(n)"
-                               :variant="getUnitVariant(n)"
-                               :boost="Battles.getBoost(getUnitID(n), props.boosters)"
-                               :popover-side="n % 2 === 0 ? 'right' : 'left'"
-                               :popover-data="{ ...popoverData[getUnitFullID(n)!!], hideCaptain: n !== 1 && n !== 2 }" />
+                <template v-else>
+
+                    <UnitThumbnail :unit-id="getUnitID(n)"
+                                   :variant="getUnitVariant(n)"
+                                   :llb-level="getUnitLlbLevel(n)"
+                                   :boost="Battles.getBoost(getUnitID(n), props.boosters)"
+                                   :popover-side="n % 2 === 0 ? 'right' : 'left'"
+                                   :popover-data="{ ...popoverData[getUnitFullID(n)!!], hideCaptain: n !== 1 && n !== 2 }" />
+
+                    <UBadge v-if="Units.getLlbLevels(getUnitID(n))?.length"
+                            class="absolute top-1 right-1 font-bold border border-red-800 hover:bg-red-300 cursor-pointer py-0.5 px-1 tracking-tighter select-none"
+                            size="sm"
+                            color="error"
+                            @click.stop.prevent="onUnitLlbClick(n)">
+                        LLB{{ getUnitLlbLevel(n) }}
+                    </UBadge>
+
+                </template>
+
 
             </div>
+
+            <!-- Support -->
 
             <div v-if="hasUnit(n)"
                  :class="{ empty: !hasSupport(n), filled: hasSupport(n) }"

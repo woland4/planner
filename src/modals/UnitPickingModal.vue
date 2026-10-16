@@ -1,12 +1,13 @@
 <script setup lang="ts">
     import { computed, ref, useTemplateRef } from 'vue';
-    import { difference, intersection, isArray, isNullish, isPlainObject, isString, sortBy, toTitleCase } from 'remeda';
+    import { difference, intersection, isArray, isNullish, isString, sortBy, toTitleCase } from 'remeda';
     import { refDebounced, useStorage } from '@vueuse/core';
     import { parse as parseQuery } from 'search-query-parser';
 
     import UnitThumbnail from '@/components/UnitThumbnail.vue';
 
     import { useResponsiveness } from '@/utils/responsiveness.ts';
+
     import { Units } from '@/utils/units.ts';
     import { Enums } from '@/utils/enums.js';
     import { Ui } from '@/utils/ui.ts';
@@ -69,6 +70,7 @@
 
     const query = ref<string>('');
     const popoverIndices = ref<Record<string, number>>({ });
+    const popoverLlbs = ref<Record<string, number>>({ });
     const debouncedQuery = refDebounced(query, 500);
 
     const recentUnits = (props.storageKey ? useStorage('recentUnits.' + props.storageKey, [ ]) : ref<ListItem[]>([ ]));
@@ -101,8 +103,10 @@
 
         return sorted
             .map(id => {
-                if (props.noVariants || !Units.hasVariants(id)) return { id };
-                return [{ id, variant: 1 }, { id, variant: 2 }];
+                if (props.noVariants) return { id };
+                else if (Units.isDual(id)) return [ { id }, { id, variant: 1 }, { id, variant: 2 } ];
+                else if (Units.isVS(id)) return [ { id, variant: 1 }, { id, variant: 2 } ];
+                else return { id };
             })
             .flat();
 
@@ -163,24 +167,20 @@
         // Captain filter
         if (isString(parsed.captain) && parsed.captain.trim().length > 0) {
             const query = parsed.captain.trim().toLowerCase();
-            result = result.filter(({ id, variant }) => Units.getCaptain(id, variant)?.base?.toLowerCase()?.includes(query));
+            result = result.filter(({ id, variant }) => Units.getCaptain(id, variant, 5)?.toLowerCase()?.includes(query));
         }
 
         // Special filter
         if (isString(parsed.special) && parsed.special.trim().length > 0) {
             const query = parsed.special.trim().toLowerCase();
-            result = result.filter(({ id, variant }) => {
-                const specials = Units.getSpecial(id, variant);
-                if (isArray(specials?.base)) return specials.base.some(s => s.description?.toLowerCase()?.includes(query));
-                else if (isPlainObject(specials?.base)) return specials.base?.description?.toLowerCase()?.includes(query);
-                else return false;
-            });
+            result = result.filter(({ id, variant }) =>
+                Units.getSpecial(id, variant, 5)?.some(s => s.description?.toLowerCase()?.includes(query)) ?? false);
         }
 
         // Support filter
         if (isString(parsed.support) && parsed.support.trim().length > 0) {
             const query = parsed.support.trim().toLowerCase();
-            result = result.filter(({ id }) => Units.getSupport(id)?.base?.toLowerCase()?.includes(query));
+            result = result.filter(({ id }) => Units.getSupport(id)?.description?.toLowerCase()?.includes(query));
         }
 
         return result;
@@ -364,6 +364,19 @@
 
     }
 
+    function onRightClick(e: MouseEvent) {
+
+        if (!enablePopovers.value || !(e.target instanceof Element)) return;
+
+        const unitID = e.target.closest('[unit-id]')?.getAttribute('unit-id');
+        if (unitID) {
+            popoverLlbs.value[unitID] = !popoverLlbs.value[unitID] ? 5 : 0;
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+    }
+
     function onClose() {
         emit('close', null);
     }
@@ -403,7 +416,8 @@
 
             <div id="unit-picking-modal-thumbnails"
                  class="h-69.5 p-2 mt-2 overflow-y-auto"
-                 @wheel="onWheel">
+                 @wheel="onWheel"
+                 @click.right="onRightClick">
                 <RecycleScroller #default="{ item }"
                                  class="scroller"
                                  :items="filteredUnitIDs"
@@ -413,9 +427,10 @@
                                  page-mode>
                     <UnitThumbnail :unit-id="item.id"
                                    :variant="item.variant"
+                                   :llb-level="popoverLlbs[item.id] ?? 0"
                                    :boost="boosterMap[item.id]"
                                    :class="{ 'border-4! border-red-500! rounded-[10px]!': selection.some(s => s.id === item.id) }"
-                                   :popover-data="enablePopovers ? { support: !!props.supportedUnitID, index: popoverIndices[item.id], shift: true } : undefined"
+                                   :popover-data="enablePopovers ? { support: !!props.supportedUnitID, index: popoverIndices[item.id], insideModal: true } : undefined"
                                    :popover-side="enablePopovers ? 'bottom' : undefined"
                                    loading="lazy"
                                    class="w-12.5 h-12.5 mr-1.25 mb-1.25 cursor-pointer rounded-[7px]"
@@ -428,8 +443,7 @@
                 <USeparator class="mt-2.5 mb-2.5" />
 
                 <div id="unit-picking-modal-recent"
-                     class="flex flex-row flex-wrap content-start gap-1.25 pl-2"
-                     @wheel="onWheel">
+                     class="flex flex-row flex-wrap content-start gap-1.25 pl-2">
                     <UnitThumbnail v-for="unit in recentUnits"
                                    :key="`${ unit.id }-${ unit.variant ?? 0 }`"
                                    :unit-id="unit.id"

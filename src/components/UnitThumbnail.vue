@@ -25,11 +25,15 @@
       -----*/
 
     const props = defineProps<{
-        unitId: Nullable<number>
-        variant?: Nullable<number>
+
+        unitId: Nullable<number>;
+        variant?: Nullable<number>;
+        llbLevel?: Nullable<number>;
+
         boost?: Nullable<number>,
         popoverSide?: 'left' | 'right' | 'top' | 'bottom';
         popoverData?: Nullable<UnitPopoverData>;
+
     }>();
 
     /*-----------
@@ -42,7 +46,9 @@
       Watchers
       --------*/
 
-    watch(() => props.popoverData, data => UnitPopovers.updatePopover(rootRef.value, data));
+    watch(() => props.popoverData, data => UnitPopovers.updatePopover(rootRef.value, { data }));
+
+    watch(() => props.llbLevel, llbLevel => UnitPopovers.updatePopover(rootRef.value, { llbLevel: llbLevel ?? 0 }));
 
     /*-------
       Methods
@@ -52,11 +58,16 @@
         if (!props.popoverSide || !props.unitId || !rootRef.value || !responsiveness.isDesktop.value)
             return;
         UnitPopovers.showPopover({
+
             anchor: rootRef.value,
+
             unitID: props.unitId,
             variant: props.variant ?? null,
+            llbLevel: props.llbLevel ?? 0,
+
             side: props.popoverSide,
             data: props.popoverData
+
         });
     }
 

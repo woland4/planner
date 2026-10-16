@@ -15,7 +15,7 @@ if (IS_DEV) {
         const { Bulletizer } = await import('@/utils/bulletizer.ts');
         const { Criteria } = await import('@/utils/criteria.ts');
 
-        (window as any).Units = Units;
+        (window as any).UnitsNew = Units;
         (window as any).Bulletizer = Bulletizer;
         (window as any).Criteria = Criteria;
 

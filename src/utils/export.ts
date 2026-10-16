@@ -1,6 +1,7 @@
 import { createApp, nextTick } from 'vue';
-import { EolStyle, Formatter, FracturedJsonOptions, NumberListAlignment, TableCommaPlacement } from 'fracturedjsonjs';
+import { isNullish } from 'remeda';
 import { toCanvas } from 'html-to-image';
+import { EolStyle, Formatter, FracturedJsonOptions, NumberListAlignment, TableCommaPlacement } from 'fracturedjsonjs';
 
 import BattleScreenshot from '@/components/viewer/BattleScreenshot.vue';
 
@@ -10,7 +11,6 @@ import { Numbers } from '@/utils/numbers.ts';
 
 import type { Battle, Booster, Team, TeamUnit } from '@/types/battles.ts';
 import type { Nullable } from '@/types/utils.ts';
-import { isNullish } from 'remeda';
 
 /*-------------
   Configuration

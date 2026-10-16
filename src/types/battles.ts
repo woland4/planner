@@ -53,7 +53,8 @@ export type Team = {
 export type TeamUnit = {
     id: number,
     variant?: Nullable<number>,
-    support?: Nullable<number>
+    support?: Nullable<number>,
+    llbLevel?: Nullable<number>
 };
 
 export type SavedTeam = { name: string } & Team;

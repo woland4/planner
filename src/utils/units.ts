@@ -21,36 +21,39 @@ const IGNORED_SUPPORT_REGEXES = [
   Types
   -----*/
 
-export type Captain = {
-    base: string;
-    combined?: string;
-};
+export type Unit = {
 
-export type Special = {
-    base: BaseSpecial | BaseSpecial[]; // Array is for multi-stage specials
-    combined?: BaseSpecial | BaseSpecial[];  // Array is for multi-stage specials
-};
+    id: number;
+    variant: Nullable<number>;
+    llbLevel: number;
 
-export type BaseSpecial = {
-    cooldown?: Nullable<number>;
-    description: string;
-};
+    name: string;
+    cost: number;
+    rarity: string;
+    isDual: boolean;
+    isVS: boolean;
 
-export type Swap = {
-    base: string;
-    super?: Nullable<string>;
-    superTurns?: Nullable<number>;
-};
+    types: Type[]; // Could be more than one for dual units
+    classes: Class[];
+    families: string[];
+    tags: string[];
+    llbLevels: number[];
 
-export type SuperSpecialOrSupport = {
-    base: string;
-    criteria: string;
-};
+    captain: Nullable<string>;
 
-type DbSpecial = {
-    cooldown: number[];
-    description: string;
-};
+    special: Nullable<{ description: string; turns: Nullable<number> }[]>;
+
+    superSpecial: Nullable<{ description: string, condition: string }>;
+
+    swap: Nullable<{
+        description: string;
+        super?: Nullable<string>;
+        superTurns?: Nullable<number>;
+    }>;
+
+    support: Nullable<{ description: string, condition: string }>;
+
+}
 
 /*-------
   Exports
@@ -58,216 +61,108 @@ type DbSpecial = {
 
 export const Units = {
 
-    getCaptain(unitID: Nullable<number | string>,
+    /*----------
+      Whole Data
+      ----------*/
+
+    getUnit(unitID: Nullable<number>,
+            variant: Nullable<number> = null,
+            llbLevel: number = 0): Nullable<Unit> {
+        return reconstructUnit(unitID, variant, llbLevel);
+    },
+
+    /*--------------
+      Single Aspects
+      --------------*/
+
+    getCaptain(unitID: Nullable<number>,
                variant: Nullable<number> = null,
-               assumeLLB: boolean = false): Nullable<Captain> {
-
-        if (!unitID) return null;
-
-        const data = window.details[unitID];
-        if (!data?.captain) return null;
-
-        const key = variant === 1 ? 'character1' : variant === 2 ? 'character2' : 'base';
-        const llb = (assumeLLB ? getLimitBreak(unitID, 'captain') : null);
-
-        if (isString(data?.captain))
-            return { base: llb?.[key] ?? data.captain };
-        else if (!isPlainObject(data?.captain))
-            return null;
-
-        const result: Partial<Captain> = { };
-
-        const captain = llb?.[key] ?? data.captain[key];
-        if (captain) {
-            result.base = captain;
-            const combined = llb?.combined ?? data.captain.combined;
-            if (key !== 'base' && combined) result.combined = combined;
-        }
-
-        return (result.base ? result as Captain : null);
-
+               llbLevel: number = 0): Nullable<string> {
+        return reconstructCaptain(unitID, variant, llbLevel);
     },
 
-    getCost(unitID: Nullable<number | string>,
-            variant: Nullable<number> = null): Nullable<number> {
-        if (!unitID) return null;
-        const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-        const data = window.units[fullID] ?? window.units[unitID];
-        return data?.cost ?? null;
+    getCost(unitID: Nullable<number>): Nullable<number> {
+        return reconstructCost(unitID);
     },
 
-    getClasses(unitID: Nullable<number | string>,
+    getClasses(unitID: Nullable<number>,
                variant: Nullable<number> = null): Class[] {
-        if (!unitID) return [ ];
-        const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-        const data = window.units[fullID] ?? window.units[unitID];
-        if (isString(data?.class))
-            return [ data.class ] as Class[];
-        else if (isArray(data?.class))
-            return data.class as Class[];
-        else if (window.units[unitID + '-1']) {
-            const class1 = (window.units[unitID + '-1']?.class ?? [ ]);
-            const class2 = (window.units[unitID + '-2']?.class ?? [ ]);
-            return unique([
-                (isArray(class1) ? class1 : [ class1 ]),
-                (isArray(class2) ? class2 : [ class2 ])
-            ].flat()) as Class[];
-        } else
-            return [ ];
+        return reconstructClasses(unitID, variant);
     },
 
-    // DB doesn't support to support variants for this, so the variant parameter is effectively uselesss
-    getFamilies(unitID: Nullable<number | string>,
+    getFamilies(unitID: Nullable<number>,
                 variant: Nullable<number> = null): string[] {
-        if (!unitID) return [ ];
-        const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-        return (window.families[fullID] ?? window.families[unitID]) ?? [ ];
+        return reconstructFamilies(unitID, variant);
     },
 
-    getName(unitID: Nullable<number | string>,
+    getLlbLevels(unitID: Nullable<number>): number[] {
+        return reconstructLlbLevels(unitID);
+    },
+
+    getName(unitID: Nullable<number>,
             variant: Nullable<number> = null): Nullable<string> {
-        if (!unitID) return null;
-        const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-        return (window.units[fullID] ?? window.units[unitID])?.name ?? null;
+        return reconstructName(unitID, variant);
     },
 
-    getRarity(unitID: Nullable<number | string>): Nullable<string> {
-        if (!unitID) return null;
-        return window.units[unitID]?.stars ?? null;
+    getRarity(unitID: Nullable<number>): Nullable<string> {
+        return reconstructRarity(unitID);
     },
 
-    getSuperSpecial(unitID: Nullable<number | string>,
-                    variant: Nullable<number> = null): Nullable<SuperSpecialOrSupport> {
-
-        if (!unitID) return null
-
-        const data = window.details[unitID];
-        if (!data) return null;
-
-        if (data.superSpecial)
-            return { base: data.superSpecial, criteria: data.superSpecialCriteria };
-        else if (data.VSSpecial) {
-            if (variant === 1)
-                return { base: data.VSSpecial?.character1, criteria: data.VSCondition };
-            else if (variant === 2)
-                return { base: data.VSSpecial?.character2, criteria: data.VSCondition };
-        } else
-            return null;
-
+    getSuperSpecial(unitID: Nullable<number>,
+                    variant: Nullable<number> = null): Nullable<{ description: string, condition: string }> {
+        return reconstructSuperSpecial(unitID, variant);
     },
 
-    getSupport(unitID: Nullable<number | string>): Nullable<SuperSpecialOrSupport> {
-
-        if (!unitID) return null
-
-        const data = window.details[unitID];
-        if (!data.support?.length) return null;
-
-        const last = data.support[data.support.length - 1];
-        if (!last?.description?.length) return null;
-
-        return {
-            base: last.description[last.description.length - 1],
-            criteria: last.Characters
-        };
-
+    getSupport(unitID: Nullable<number>): Nullable<{ description: string, condition: string }> {
+        return reconstructSupport(unitID);
     },
 
-    getSupporters(supportedUnitID: Nullable<number | string>,
+    getSpecial(unitID: Nullable<number>,
+               variant: Nullable<number> = null,
+               llbLevel = 0): { description: string, turns: number }[] {
+        return reconstructSpecial(unitID, variant, llbLevel);
+    },
+
+    getSwap(unitID: Nullable<number>): Nullable<{ description: string, super?: string, superTurns?: number }> {
+        return reconstructSwap(unitID);
+    },
+
+    getTags(unitID: Nullable<number>,
+            variant: Nullable<number> = null): string[] {
+        return reconstructTags(unitID, variant);
+    },
+
+    getTypes(unitID: Nullable<number>,
+             variant: Nullable<number> = null): Type[] {
+        return reconstructTypes(unitID, variant);
+    },
+
+    /*---------
+      Utilities
+      ---------*/
+
+    getSupporters(supportedUnitID: Nullable<number>,
                   supportedUnitVariant: Nullable<number> = null): number[] {
 
         if (!supportedUnitID) return [ ];
 
         return getSupporterIDs().filter(supportingUnitID => {
 
-            const support = Units.getSupport(supportingUnitID);
-            if (!support?.base) return false;
+            const support = reconstructSupport(supportingUnitID);
+            if (!support?.description) return false;
 
-            const supportedFamilies = Units.getFamilies(supportedUnitID, supportedUnitVariant).map(normalizeString);
-            const supportingFamilies = Units.getFamilies(supportingUnitID).map(normalizeString);
+            const supportedFamilies = reconstructFamilies(supportedUnitID, supportedUnitVariant).map(normalizeString);
+            const supportingFamilies = reconstructFamilies(supportingUnitID).map(normalizeString);
             if (supportingFamilies.some(f => supportedFamilies.includes(f)))
                 return false;
 
-            return Criteria.parseCriteria(support.criteria)(supportedUnitID, supportedUnitVariant);
+            return Criteria.parseCriteria(support.condition)(supportedUnitID, supportedUnitVariant);
 
         });
 
     },
 
-    getSpecial(unitID: Nullable<number | string>,
-               variant: Nullable<number> = null,
-               assumeLLB: boolean = false): Nullable<Special> {
-
-        if (!unitID) return null
-
-        const data = window.details[unitID];
-        if (!data?.special) return null;
-
-        const key = variant === 1 ? 'character1' : variant === 2 ? 'character2' : 'base';
-        const llb = (assumeLLB ? getLimitBreak(unitID, 'special') : null);
-
-        if (isString(data.special) || isArray(data.special)) {
-            const result = toBaseSpecial(unitID, llb?.[key] ?? data.special);
-            return result ? { base: result } : null;
-        } else if (!isPlainObject(data.special))
-            return null;
-
-        const result: Partial<Special> = { };
-
-        const special = toBaseSpecial(unitID, llb?.[key] ?? data.special[key] ?? data.special.base);
-        if (special) {
-            result.base = special;
-            const combined = toBaseSpecial(unitID, llb?.combined ?? data.special.combined);
-            if (key !== 'base' && combined) result.combined = combined;
-        }
-
-        return (result.base ? result as Special : null);
-
-    },
-
-    getSwap(unitID: Nullable<number | string>): Nullable<Swap> {
-
-        if (!unitID) return null
-
-        const data = window.details[unitID];
-        if (!data?.swap) return null;
-
-        if (isString(data.swap))
-            return { base: data.swap };
-        else if (isPlainObject(data.swap))
-            return data.swap;
-        else
-            return null;
-
-    },
-
-    getTags(unitID: Nullable<number | string>,
-            variant: Nullable<number> = null): string[] {
-
-        if (!unitID) return [ ];
-
-        const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-        const data = window.tags[fullID] ?? window.tags[unitID] ?? [ ];
-
-        let result;
-        if (!variant)
-            result = data.flat().filter((x, n, a) => a.indexOf(x) === n);
-        else if (data.some(d => isArray(d)))
-            result = (data[variant - 1] as string[]) ?? [ ];
-        else
-            result = (data as string[]) ?? [ ];
-
-        return result
-            .map(t => t.replace(/^Former\s*\/\s*/, ''))
-            .map(t => t.endsWith('/ Devil Fruit User') ? t.match(/(.+?)\s*\/\s*(Devil Fruit User)$/)?.slice(1) ?? t : t)
-            .flat()
-            .map(t => t.trim())
-            .filter(t => !isNullish(t))
-            .filter((x,n,a) => a.indexOf(x) === n);
-
-    },
-
-    getThumbnailURL(unitID: Nullable<number | string>,
+    getThumbnailURL(unitID: Nullable<number>,
                     variant: Nullable<number> = null,
                     useFallback: boolean = false): string {
 
@@ -284,31 +179,24 @@ export const Units = {
 
     },
 
-    getTypes(unitID: Nullable<number | string>,
-             variant: Nullable<number> = null): Type[] {
-        if (!unitID) return [ ];
-        const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-        const data = window.units[fullID] ?? window.units[unitID];
-        if (data?.type)
-            return [ data.type ] as Type[];
-        else if (window.units[unitID + '-1']) {
-            return [
-                window.units[unitID + '-1'].type,
-                window.units[unitID + '-2']?.type
-            ].filter(t => !isNullish(t)) as Type[];
-        } else
-            return [ ];
-    },
-
-    hasVariants(unitID: Nullable<number | string>): boolean {
-        if (!unitID) return false;
-        return (window.units[unitID]?.type === null);
+    hasVariants(unitID: Nullable<number>): boolean {
+        return Units.isDual(unitID) || Units.isVS(unitID);
     },
 
     isKnownFamily(value: string): boolean {
         if (!knownFamilies)
             knownFamilies = unique(Object.values(window.families ?? { }).flat().map(normalizeString));
         return knownFamilies.includes(normalizeString(value));
+    },
+
+    isDual(unitID: Nullable<number>): boolean {
+        if (!unitID) return false;
+        return !!window.details[unitID]?.swap;
+    },
+
+    isVS(unitID: Nullable<number>): boolean {
+        if (!unitID) return false;
+        return !!window.details[unitID]?.VSCondition;
     }
 
 }
@@ -320,36 +208,295 @@ export const Units = {
 // Caches the ID of the units that have a support at all
 let supporterIDs: Nullable<number[]> = null;
 
-// Caches known families
+// Caches known families so we don't have to reprocess them each time
 let knownFamilies: Nullable<string[]> = null;
 
-function getLimitBreak(unitID: number | string, section: 'captain'): Nullable<Record<string, string>>;
-function getLimitBreak(unitID: number | string, section: 'special'): Nullable<Record<string, string | DbSpecial[]>>;
-function getLimitBreak(unitID: number | string, section: 'captain' | 'special') {
+function reconstructUnit(unitID: Nullable<number>,
+                         variant?: Nullable<number>,
+                         llbLevel: number = 0): Nullable<Unit> {
 
-    const levels = window.details[unitID]?.lLimit;
-    if (!isArray(levels)) return null;
+    if (!unitID) return null;
 
-    let result: Nullable<Record<string, any>> = null;
+    const fullID = variant ? `${ unitID }-${ variant}` : unitID;
+    const unit = window.units[fullID] ?? window.units[unitID];
+    const details = window.details[fullID] ?? window.details[unitID];
+    if (!unit || !details) return null;
 
-    for (const level of levels) {
-        const values = level?.[section];
-        if (isPlainObject(values))
-            result = { ...(result ?? { }), ...values };
-    }
+    const isVS = Units.isVS(unitID);
+    if (isVS && !variant) return null; // VS's have no combined form
 
-    return result;
+    return {
+
+        id: unitID,
+        variant,
+        llbLevel,
+
+        name: reconstructName(unitID, variant)!!,
+        cost: reconstructCost(unitID)!!,
+        rarity: reconstructRarity(unitID)!!,
+        isDual: Units.isDual(unitID),
+        isVS: isVS,
+
+        types: reconstructTypes(unitID, variant),
+        classes: reconstructClasses(unitID, variant),
+        families: reconstructFamilies(unitID, variant),
+        tags: reconstructTags(unitID, variant),
+        llbLevels: reconstructLlbLevels(unitID),
+
+        captain: reconstructCaptain(unitID, variant, llbLevel),
+
+        special: reconstructSpecial(unitID, variant, llbLevel),
+
+        superSpecial: reconstructSuperSpecial(unitID, variant),
+
+        swap: reconstructSwap(unitID),
+
+        support: reconstructSupport(unitID)
+
+    };
 
 }
 
-function toBaseSpecial(unitID: number | string,
-                       special: Nullable<string | DbSpecial[]>): Nullable<BaseSpecial | BaseSpecial[]> {
-    if (isString(special))
-        return { cooldown: window.cooldowns[unitID]?.[1], description: special };
-    else if (isArray(special))
-        return special.map(s => ({ cooldown: s.cooldown?.[1], description: s.description }));
+function reconstructName(unitID: Nullable<number>,
+                         variant: Nullable<number> = null): Nullable<string> {
+    if (!unitID) return null;
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    return (window.units[fullID] ?? window.units[unitID])?.name ?? null;
+}
+
+function reconstructCost(unitID: Nullable<number>,
+                         variant: Nullable<number> = null): Nullable<number> {
+    if (!unitID) return null;
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.units[fullID] ?? window.units[unitID];
+    return data?.cost ?? null;
+}
+
+function reconstructRarity(unitID: Nullable<number>): Nullable<string> {
+    if (!unitID) return null;
+    return window.units[unitID]?.stars ?? null;
+}
+
+function reconstructTypes(unitID: Nullable<number>,
+                          variant: Nullable<number> = null): Type[] {
+    if (!unitID) return [ ];
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.units[fullID] ?? window.units[unitID];
+    if (data?.type)
+        return [ data.type ] as Type[];
+    else if (window.units[unitID + '-1']) {
+        return [
+            window.units[unitID + '-1'].type,
+            window.units[unitID + '-2']?.type
+        ].filter(t => !isNullish(t)) as Type[];
+    } else
+        return [ ];
+}
+
+function reconstructClasses(unitID: Nullable<number>,
+                            variant: Nullable<number> = null): Class[] {
+    if (!unitID) return [ ];
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.units[fullID] ?? window.units[unitID];
+    if (isString(data?.class))
+        return [ data.class ] as Class[];
+    else if (isArray(data?.class))
+        return data.class as Class[];
+    else if (window.units[unitID + '-1']) {
+        const class1 = (window.units[unitID + '-1']?.class ?? [ ]);
+        const class2 = (window.units[unitID + '-2']?.class ?? [ ]);
+        return unique([
+            (isArray(class1) ? class1 : [ class1 ]),
+            (isArray(class2) ? class2 : [ class2 ])
+        ].flat()) as Class[];
+    } else
+        return [ ];
+}
+
+// DB doesn't support to support variants for this, so the variant parameter is effectively useless
+function reconstructFamilies(unitID: Nullable<number>,
+                             variant: Nullable<number> = null): string[] {
+    if (!unitID) return [ ];
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    return (window.families[fullID] ?? window.families[unitID]) ?? [ ];
+}
+
+function reconstructTags(unitID: Nullable<number>,
+                         variant: Nullable<number> = null): string[] {
+
+    if (!unitID) return [ ];
+
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.tags[fullID] ?? window.tags[unitID] ?? [ ];
+
+    let result;
+    if (!variant)
+        result = data.flat().filter((x, n, a) => a.indexOf(x) === n);
+    else if (data.some(d => isArray(d)))
+        result = (data[variant - 1] as string[]) ?? [ ];
+    else
+        result = (data as string[]) ?? [ ];
+
+    return result
+        .map(t => t.replace(/^Former\s*\/\s*/, ''))
+        .map(t => t.endsWith('/ Devil Fruit User') ? t.match(/(.+?)\s*\/\s*(Devil Fruit User)$/)?.slice(1) ?? t : t)
+        .flat()
+        .map(t => t.trim())
+        .filter(t => !isNullish(t))
+        .filter((x,n,a) => a.indexOf(x) === n);
+
+}
+
+function reconstructLlbLevels(unitID: Nullable<number>): number[] {
+    if (!unitID) return [ ];
+    const details = window.details[unitID]?.lLimit ?? [ ];
+    return [ 1, 2, 3, 4, 5 ].filter(i => details[i - 1]?.captain || details[i - 1]?.special);
+}
+
+function reconstructCaptain(unitID: Nullable<number>,
+                            variant: Nullable<number> = null,
+                            llbLevel: number = 0): Nullable<string> {
+
+    if (!unitID) return null;
+
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.details[fullID] ?? window.details[unitID];
+    if (!isPlainObject(data)) return null;
+
+    let captain: string | Record<string, string> = data.captain;
+    if (llbLevel > 0) {
+        const lLimit = data?.lLimit ?? [ ];
+        for (let i=llbLevel-1; i>=0; --i) {
+            if (!isNullish(lLimit[i]?.captain)) {
+                captain = lLimit[i].captain!!;
+                break;
+            }
+        }
+    }
+
+    if (isNullish(captain))
+        return null;
+    else if (isString(captain))
+        return captain;
+    else {
+        return (
+            captain[variant === 1 ? 'character1' : (variant === 2 ? 'character2' : 'combined')] ??
+            captain.level6 ??
+            captain.level5 ??
+            captain.level4 ??
+            captain.level3 ??
+            captain.level2 ??
+            captain.level1 ??
+            captain.base
+        );
+    }
+
+}
+
+// Returns one element per stage (single element for single-stage specials)
+function reconstructSpecial(unitID: Nullable<number>,
+                            variant: Nullable<number> = null,
+                            llbLevel: number = 0): { description: string, turns: number }[] {
+
+    if (!unitID) return [ ];
+
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.details[fullID] ?? window.details[unitID];
+    if (!isPlainObject(data)) return [ ];
+
+    let result = data.special;
+    if (llbLevel > 0) {
+        const lLimit = data?.lLimit ?? [ ];
+        for (let i=llbLevel-1; i>=0; --i) {
+            if (!isNullish(lLimit[i]?.special)) {
+                result = lLimit[i].special!!;
+                break;
+            }
+        }
+    }
+
+    if (isPlainObject(result)) {
+        result = (
+            result[variant === 1 ? 'character1' : (variant === 2 ? 'character2' : 'combined')] ??
+            result.level6 ??
+            result.level5 ??
+            result.level4 ??
+            result.level3 ??
+            result.level2 ??
+            result.level1 ??
+            result.base
+        );
+    }
+
+    if (isNullish(result))
+        return [ ];
+    else if (isString(result)) {
+        const cooldown = window.cooldowns[fullID] ?? window.cooldowns[unitID] ?? [ ];
+        return [{
+            description: result,
+            turns: cooldown[cooldown.length - 1] ?? null
+        }];
+    } else if (isArray(result)) {
+        return result.map(s => ({
+            description: s.description,
+            turns: s.cooldown[s.cooldown?.length - 1] ?? null
+        }));
+    } else
+        return [ ];
+
+}
+
+function reconstructSuperSpecial(unitID: Nullable<number>,
+                                 variant: Nullable<number> = null): Nullable<{ description: string, condition: string }> {
+
+    if (!unitID) return null
+
+    const data = window.details[unitID];
+    if (!data) return null;
+
+    if (data.superSpecial)
+        return { description: data.superSpecial, condition: data.superSpecialCriteria };
+    else if (data.VSSpecial) {
+        if (variant === 1)
+            return { description: data.VSSpecial?.character1, condition: data.VSCondition };
+        else if (variant === 2)
+            return { description: data.VSSpecial?.character2, condition: data.VSCondition };
+    } else
+        return null;
+
+}
+
+function reconstructSwap(unitID: Nullable<number>): Nullable<{ description: string; super?: string; superTurns?: number; }> {
+
+    if (!unitID) return null
+
+    const data = window.details[unitID];
+    if (!data?.swap) return null;
+
+    if (isString(data.swap))
+        return { description: data.swap };
+    else if (isPlainObject(data.swap))
+        return { description: data.swap.base, super: data.swap.super, superTurns: data.swap.superTurns };
     else
         return null;
+
+}
+
+function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: string, condition: string }> {
+
+    if (!unitID) return null
+
+    const data = window.details[unitID];
+    if (!data.support?.length) return null;
+
+    const last = data.support[data.support.length - 1];
+    if (!last?.description?.length) return null;
+
+    return {
+        description: last.description[last.description.length - 1],
+        condition: last.Characters
+    };
+
 }
 
 function getSupporterIDs(): number[] {
@@ -357,7 +504,7 @@ function getSupporterIDs(): number[] {
         supporterIDs = Object.keys(window.details ?? { })
             .filter(id => /^\d+$/.test(id))
             .filter(id => {
-                let support = Units.getSupport(id)?.base;
+                let support = reconstructSupport(parseInt(id, 10))?.description;
                 if (!support) return false;
                 for (let regex of IGNORED_SUPPORT_REGEXES)
                     support = support.replace(regex, '');

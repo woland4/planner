@@ -40,11 +40,11 @@
                                  :key="`${ UnitPopovers.currentUnit.value.unitID }-${ UnitPopovers.currentUnit.value.variant }`"
                                  :unit-id="UnitPopovers.currentUnit.value.unitID"
                                  :variant="UnitPopovers.currentUnit.value.variant"
+                                 :llb-level="UnitPopovers.currentUnit.value.llbLevel"
                                  :index="UnitPopovers.currentUnit.value.data?.index"
-                                 :assume-llb="UnitPopovers.currentUnit.value.data?.llb"
                                  :support="UnitPopovers.currentUnit.value.data?.support"
                                  :hide-captain="UnitPopovers.currentUnit.value.data?.hideCaptain"
-                                 :shift="UnitPopovers.currentUnit.value.data?.shift" />
+                                 :inside-modal="UnitPopovers.currentUnit.value.data?.insideModal" />
                 </template>
 
             </UPopover>

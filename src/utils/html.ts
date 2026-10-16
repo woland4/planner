@@ -1,6 +1,7 @@
+import { Units } from '@/utils/units.ts';
+
 import type { Type } from '@/types/enums.ts';
 import type { Nullable } from '@/types/utils.ts';
-import { Units } from '@/utils/units.ts';
 
 // TODO Markdown instead of something homebrew?
 export const Html = {
@@ -22,7 +23,7 @@ export const Html = {
         }
     },
 
-    decorateUnit(unitID: number | string,
+    decorateUnit(unitID: number,
                  variant?: Nullable<number>): string {
         const unitName = Units.getName(unitID, variant)?.replace(/^(.+) - .+$/, '$1') ?? '';
         const unitType = Units.getTypes(unitID, variant)?.[0];
@@ -31,7 +32,7 @@ export const Html = {
 
     textToHTML(text: string): string {
         return text.replace(/\(\((.+?)\)\)\[\[(.+?)\]\]/g,
-            (_, clazz, text) => `<span class='whitespace-nowrap ${ clazz }'>${ text }</span>`);
+            (_, clazz, text) => `<span class='${ clazz }'>${ text }</span>`);
     }
 
 }

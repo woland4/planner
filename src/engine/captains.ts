@@ -1,4 +1,4 @@
-import { intersection, isNullish, unique } from 'remeda';
+import { intersection, isNullish } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
 import { Bulletizer } from '@/utils/bulletizer.ts';
@@ -6,6 +6,7 @@ import { Criteria } from '@/utils/criteria.ts';
 import { Html } from '@/utils/html.ts';
 
 import type { Team } from '@/types/battles.ts';
+import type { TeamCompositionIssue } from '@/types/engine.ts';
 import type { Nullable } from '@/types/utils.ts';
 
 /**
@@ -94,55 +95,52 @@ const OTHER_PREFIX_REGEX = /^(?:all\s+)?other\s+/i;
 const GENERIC_CONDITIONAL_REGEX = /if(?: your)? crew has (\d+)\+? (.+) characters?/i;
 const TYPE_CONDITIONAL_REGEX = /if there is(?: a)? (.+?) characters? in your crew/i;
 
-const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunction' });
-
 /*-------
   Exports
   -------*/
 
-export function checkCaptainIssues(team: Nullable<Team>): string[] {
+export function checkCaptainIssues(team: Nullable<Team>): TeamCompositionIssue[] {
     if (!team?.units?.length) return [ ];
-    return unique([
+    return [
         ...checkCaptain(team, 0),
         ...checkCaptain(team, 5)
-    ]);
+    ];
 }
 
 /*---------
   Internals
   ---------*/
 
-// TODO LLB support?
-// TODO Dual captain support
+// TODO Dual captain support?
 function checkCaptain(team: Team,
-                      captainIndex: number): string[] {
+                      captainIndex: number): TeamCompositionIssue[] {
 
     const captain = team.units[captainIndex];
     if (!captain?.id) return [ ];
 
-    const ability = Units.getCaptain(captain.id, captain.variant);
-    if (!ability?.base) return [ ];
+    const description = Units.getCaptain(captain.id, captain.variant, captain.llbLevel ?? 0);
+    if (!description) return [ ];
 
-    const sanitizedAbility = ability?.base
+    const sanitizedAbility = description
         .replace(/boosts (.+?)'s ATK by/gi, 'boosts ATK of $1 by')
         .replace(/and ATK of/gi, 'and boosts ATK of');
 
     const bullets = Bulletizer.split(sanitizedAbility);
 
-    const result: string[] = [ ];
+    const result: TeamCompositionIssue[] = [ ];
 
     const atkBoosts = bullets.filter(bullet => /Boosts.*ATK/i.test(bullet));
     const unboostedUnits = calculateUnboostedUnits(team, captainIndex, atkBoosts);
-    if (unboostedUnits.length)
-        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } does not boost ${ LIST_FORMATTER.format(unboostedUnits) }`);
+    for (let index of unboostedUnits)
+        result.push({ index, issue: `Not boosted by ${ Html.decorateUnit(captain.id, captain.variant) }` });
 
     const genericConditionals =  bullets.filter(bullet => GENERIC_CONDITIONAL_REGEX.test(bullet));
     if (genericConditionals.some(c => !isGenericConditionalMet(team, c)))
-        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } has unmet crew requirements`);
+        result.push({ index: captainIndex, issue: 'Has unmet captain crew requirements' });
 
     const typeConditionals =  bullets.filter(bullet => TYPE_CONDITIONAL_REGEX.test(bullet));
     if (typeConditionals.some(c => !isTypeConditionalMet(team, c)))
-        result.push(`${ Html.decorateUnit(captain.id, captain.variant) } has unmet crew requirements`);
+        result.push({ index: captainIndex, issue: 'Has unmet captain crew requirements' });
 
     return result;
 
@@ -150,15 +148,12 @@ function checkCaptain(team: Team,
 
 function calculateUnboostedUnits(team: Team,
                                  captainIndex: number,
-                                 captainBullets: string[]): string[] {
+                                 captainBullets: string[]): number[] {
     return [ 5, 0, 4, 1, 3, 2]
-        .map(unitIndex => {
+        .filter(unitIndex => {
             const unit = team.units[unitIndex];
-            if (!!unit?.id && !isBoosted(team, unitIndex, captainIndex, captainBullets))
-                return Html.decorateUnit(unit.id, unit.variant);
-            return null
-        })
-        .filter(u => !isNullish(u));
+            return !!unit?.id && !isBoosted(team, unitIndex, captainIndex, captainBullets);
+        });
 }
 
 function isBoosted(team: Team,

@@ -3,6 +3,11 @@ import type { GimmickType } from '@/types/enums.ts';
 import type { Team } from '@/types/battles.ts';
 import type { Nullable } from '@/types/utils.ts';
 
+export type TeamCompositionIssue = {
+    index: number;
+    issue: string;
+};
+
 export type GimmickChecker<T extends GimmickEffectType = GimmickEffectType> = {
     type: GimmickType;
     check: (gimmick: GimmickOf<T>, team: Nullable<Team>) => GimmickCheckResult
