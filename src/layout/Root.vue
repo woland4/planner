@@ -1,4 +1,5 @@
 <script setup lang="ts">
+    import { ref } from 'vue';
     import { useEventListener } from '@vueuse/core';
 
     import Header from '@/layout/Header.vue';
@@ -8,11 +9,22 @@
     import UnitPopover from '@/components/UnitPopover.vue';
     import RightSidebar from '@/layout/RightSidebar.vue';
 
+    import { Database } from '@/utils/database.ts';
     import { UnitPopovers } from '@/utils/unitPopovers.ts';
+
+    import loadingIcon from '@/assets/mmh.webp';
+
+    /*-----
+      State
+      -----*/
+
+    const isReady = ref(false);
 
     /*---------
       Lifecycle
       ---------*/
+
+    Database.loadScripts().then(() => isReady.value = true);
 
     useEventListener(document, 'scroll', () => UnitPopovers.hidePopover(null), true);
 </script>
@@ -21,12 +33,22 @@
     <UApp>
         <div class="h-full flex flex-col">
 
-            <Header />
+            <template v-if="isReady">
+                <Header />
+                <Center />
+                <LeftSidebar />
+                <RightSidebar />
+            </template>
 
-            <Center />
+            <div v-else
+                 class="fixed text-[12px] inset-0 flex flex-col items-center justify-center gap-1">
 
-            <LeftSidebar />
-            <RightSidebar />
+                <img :src="loadingIcon"
+                     class="w-12 h-12" />
+
+                Loading database data...
+
+            </div>
 
             <UPopover :key="UnitPopovers.currentUnit.value?.key"
                       :open="!!UnitPopovers.currentUnit.value"
