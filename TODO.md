@@ -6,7 +6,4 @@
   - Add weakness exploit gimmick?
   - Add optional notes to gimmicks? eg "Only if 4+ giants in the team"
   - JSON optimization? merge etc.
-  - Ignore "When character becomes... during Captain Shift " and "When this character is in Combined Form from Super Swap Effect" clauses in super special criteria in engine
-  - Types/classes in OR instead of AND in unit picking modal
   - Add LLB badge in team screenshot
-  - Fix support criteria for #4157 (test on #4654)

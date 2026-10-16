@@ -17,6 +17,8 @@ const TAG_REGEX = /\[((?!STR]|DEX]|QCK]|PSY]|INT])[^\]]+)]/gi;
 const SEPARATOR_REGEX = /(?:\s*,\s*|\s+)(?:and|or)\s+|\s*,\s*|:\s*/g;
 const LEFTOVERS_REGEX = /[\/\[\]]/g;
 
+const OF_THE_FOLLOWING_REGEX = /^(.*?)\s*\bof the following\b:?\s*/i;
+
 const COST_PATTERNS: CostPattern[] = [
     {
         regex: /cost (\d+) or less/i, // Cost N or less
@@ -92,18 +94,28 @@ export const Criteria = {
             return result;
         }
 
-        const remaining = (cost?.matched ? sanitized.replace(cost.matched, '') : sanitized);
+        let remaining = (cost?.matched ? sanitized.replace(cost.matched, '') : sanitized);
+
+        const followingMatch = remaining.match(OF_THE_FOLLOWING_REGEX);
+        const followingCriteria = followingMatch ? parseCriteriaTerm(followingMatch[1]) : null;
+
+        if (followingMatch)
+            remaining = remaining.slice(followingMatch[0].length);
 
         const terms = remaining
             .split(SEPARATOR_REGEX)
             .map(parseCriteriaTerm)
             .filter(t => !isNullish(t));
 
+        const parts: CriteriaCheck[] = [];
+        if (cost?.check) parts.push(cost.check);
+        if (followingCriteria) parts.push(followingCriteria);
+        if (terms.length) parts.push((unitID, variant) => terms.some(t => t(unitID, variant)));
+
         let result: CriteriaCheck;
-        if (!cost?.check && !terms.length) result = () => true;
-        else if (!cost?.check) result = (unitID, variant) => terms.some(t => t(unitID, variant));
-        else if (!terms.length) result = cost.check;
-        else result = (unitID, variant) => cost.check(unitID, variant) && terms.some(t => t(unitID, variant));
+        if (!parts.length) result = () => true;
+        else if (parts.length === 1) result = parts[0];
+        else result = (unitID, variant) => parts.every(p => p(unitID, variant));
 
         criteriaCache.set(criteria, result);
         return result;

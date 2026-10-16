@@ -139,7 +139,7 @@
             result = result.filter(({ id }) => Units.getTypes(id).includes(type));
         } else if (isArray(parsed.type)) {
             const types = parsed.type.map((t: string) => t.toUpperCase());
-            result = result.filter(({ id, variant }) => intersection(types, Units.getTypes(id, variant)).length === types.length);
+            result = result.filter(({ id, variant }) => intersection(types, Units.getTypes(id, variant)).length > 0);
         }
 
         // Class filter
@@ -148,7 +148,7 @@
             result = result.filter(({ id }) => Units.getClasses(id).includes(clazz as Class));
         } else if (isArray(parsed.class)) {
             const classes = parsed.class.map((t: string) => sanitizeClassFilter(t));
-            result = result.filter(({ id, variant }) => intersection(classes, Units.getClasses(id, variant)).length === classes.length);
+            result = result.filter(({ id, variant }) => intersection(classes, Units.getClasses(id, variant)).length > 0);
         }
 
         // Rarity filter
@@ -161,7 +161,7 @@
             result = result.filter(({ id, variant }) => Units.getTags(id, variant).map(t => t.toLowerCase()).includes(tag));
         } else if (isArray(parsed.tag)) {
             const tags = (parsed.tag as string[]).map(t => t.toLowerCase());
-            result = result.filter(({ id, variant }) => intersection(tags, Units.getTags(id, variant).map(t => t.toLowerCase())).length == tags.length);
+            result = result.filter(({ id, variant }) => intersection(tags, Units.getTags(id, variant).map(t => t.toLowerCase())).length > 0);
         }
 
         // Captain filter

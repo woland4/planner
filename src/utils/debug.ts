@@ -1,3 +1,5 @@
+import { isNullish, prop, unique } from 'remeda';
+
 /*-------
   Exports
   -------*/
@@ -15,9 +17,18 @@ if (IS_DEV) {
         const { Bulletizer } = await import('@/utils/bulletizer.ts');
         const { Criteria } = await import('@/utils/criteria.ts');
 
-        (window as any).UnitsNew = Units;
+        (window as any).Units = Units;
         (window as any).Bulletizer = Bulletizer;
         (window as any).Criteria = Criteria;
+
+        (window as any).extractDetails = function(path: string[]): any {
+            const result = [ ];
+            for (let i=1; i<10000; ++i) {
+                if (window.details[i])
+                    result.push((prop as any)(window.details[i], ...path));
+            }
+            return unique(result.filter(r => !isNullish(r)));
+        }
 
     })();
 }

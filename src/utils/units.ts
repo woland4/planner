@@ -141,22 +141,24 @@ export const Units = {
       Utilities
       ---------*/
 
-    getSupporters(supportedUnitID: Nullable<number>,
-                  supportedUnitVariant: Nullable<number> = null): number[] {
+    getSupporters(unitID: Nullable<number>,
+                  variant: Nullable<number> = null): number[] {
 
-        if (!supportedUnitID) return [ ];
+        if (!unitID) return [ ];
 
-        return getSupporterIDs().filter(supportingUnitID => {
+        return getSupporterIDs().filter(supporterUnitID => {
 
-            const support = reconstructSupport(supportingUnitID);
+            if (supporterUnitID !== 4626) return false;
+
+            const support = reconstructSupport(supporterUnitID);
             if (!support?.description) return false;
 
-            const supportedFamilies = reconstructFamilies(supportedUnitID, supportedUnitVariant).map(normalizeString);
-            const supportingFamilies = reconstructFamilies(supportingUnitID).map(normalizeString);
+            const supportedFamilies = reconstructFamilies(unitID, variant).map(normalizeString);
+            const supportingFamilies = reconstructFamilies(supporterUnitID).map(normalizeString);
             if (supportingFamilies.some(f => supportedFamilies.includes(f)))
                 return false;
 
-            return Criteria.parseCriteria(support.condition)(supportedUnitID, supportedUnitVariant);
+            return Criteria.parseCriteria(support.condition)(unitID, variant);
 
         });
 

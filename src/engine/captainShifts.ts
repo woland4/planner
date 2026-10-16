@@ -55,6 +55,6 @@ function checkCaptainShift(unit: Nullable<TeamUnit>,
     if (requiredIndex === unitIndex)
         return null;
     else
-        return { index: unitIndex, issue: 'Is not in the correct position for captain shift' };
+        return { index: unitIndex, issue: 'Not in the correct position for captain shift' };
 
 }

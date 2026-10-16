@@ -82,7 +82,11 @@ const KNOWN_BULLETS = [
     /must be captain/i,
     /can be launched/i,
     /crew must consist/i,
+];
 
+const ALWAYS_TRUE_CONDITIONS = [
+    /when this character is in combined form from super swap effect and/i,
+    /when character becomes.*during captain shift and/i
 ];
 
 /*-------
@@ -110,7 +114,11 @@ function checkSuperSpecial(unitIndex: number,
     if (!condition) return null;
 
     const isCaptain = unitIndex === 0 || unitIndex === 5;
-    const sanitizedCondition = condition.replace(/when character becomes.+?during captain shift and/i, '');
+
+    let sanitizedCondition = condition;
+    for (let regex of ALWAYS_TRUE_CONDITIONS)
+        sanitizedCondition = sanitizedCondition.replace(regex, '');
+
     const bullets = Bulletizer.split(sanitizedCondition);
     if (bullets.some(b => /must be captain/i.test(b)) && !isCaptain) return null;
 
