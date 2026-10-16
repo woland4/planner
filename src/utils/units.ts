@@ -146,8 +146,6 @@ export const Units = {
 
         return getSupporterIDs().filter(supporterUnitID => {
 
-            if (supporterUnitID !== 4626) return false;
-
             const support = reconstructSupport(supporterUnitID);
             if (!support?.description) return false;
 
