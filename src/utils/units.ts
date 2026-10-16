@@ -1,7 +1,7 @@
 import { isArray, isNullish, isNumber, isPlainObject, isString, unique } from 'remeda';
 
 import { Criteria } from '@/utils/criteria.ts';
-import { IS_DEV } from '@/utils/debug.ts';
+import { Database } from '@/utils/database.ts';
 
 import type { Nullable } from '@/types/utils.ts';
 import type { Class, Type } from '@/types/enums.ts';
@@ -9,8 +9,6 @@ import type { Class, Type } from '@/types/enums.ts';
 /*---------
   Constants
   ---------*/
-
-const IMAGE_BASE = (IS_DEV ? 'http://localhost/optc' : 'https://2Shankz.github.io/optc-db.github.io');
 
 const IGNORED_SUPPORT_REGEXES = [
     /reduces damage received from [^.]+ by [\d.]%\./i,
@@ -169,7 +167,7 @@ export const Units = {
                     useFallback: boolean = false): string {
 
         if (!unitID)
-            return `${ IMAGE_BASE }/api/images/common/noimage.png`;
+            return `${ Database.IMAGE_BASE }/common/noimage.png`;
 
         const numericID = (isNumber(unitID) ? unitID : parseInt(unitID, 10));
         const prefix = (useFallback ? 'jap' : 'glo');
@@ -177,7 +175,7 @@ export const Units = {
         const subDirectory = ('000' + (Math.floor((numericID % 1000) / 100) * 100)).slice(-3);
         const baseName = ('0000' + numericID).slice(-4);
         const qualifier = (variant ? `-${ variant }` : '');
-        return `${ IMAGE_BASE }/api/images/thumbnail/${ prefix }/${ directory }/${ subDirectory }/${ baseName }${ qualifier }.png`;
+        return `${ Database.IMAGE_BASE }/thumbnail/${ prefix }/${ directory }/${ subDirectory }/${ baseName }${ qualifier }.png`;
 
     },
 

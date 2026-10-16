@@ -5,8 +5,12 @@ import { IS_DEV } from '@/utils/debug.ts';
   ---------*/
 
 const SCRIPT_BASE = (IS_DEV ?
-    'https://cdn.jsdelivr.net/gh/2Shankz/optc-db.github.io@master/common/data' :
-    'https://2Shankz.github.io/optc-db.github.io/common_data');
+    'http://localhost/optc/common/data' :
+    'https://2Shankz.github.io/optc-db.github.io/common/data');
+
+const IMAGE_BASE = (IS_DEV ?
+    'http://localhost/optc/api/images' :
+    'https://2Shankz.github.io/optc-db.github.io/api/images');
 
 const SCRIPTS = [
     'cooldowns.js',
@@ -21,6 +25,8 @@ const SCRIPTS = [
   -------*/
 
 export const Database = {
+
+    IMAGE_BASE,
 
     loadScripts(): Promise<boolean> {
         return Promise.all(SCRIPTS.map(s => loadScript(`${ SCRIPT_BASE }/${ s }`)))
