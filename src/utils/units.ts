@@ -504,7 +504,7 @@ function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: s
     if (!unitID) return null;
 
     const data = window.details[unitID];
-    if (!data.support?.length) return null;
+    if (!data?.support?.length) return null;
 
     const last = data.support[data.support.length - 1];
     if (!last?.description?.length) return null;

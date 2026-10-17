@@ -33,7 +33,7 @@ export const Html = {
 
     decorateUnit(unitID: number,
                  variant?: Nullable<number>): string {
-        const unitName = Units.getName(unitID, variant)?.replace(/^(.+) - .+$/, '$1') ?? '';
+        const unitName = Units.getName(unitID, variant)?.replace(/^(.+?)( -|:) .+$/, '$1') ?? '';
         const unitType = Units.getTypes(unitID, variant)?.[0];
         return Html.addTypeColoring(unitName, unitType);
     },

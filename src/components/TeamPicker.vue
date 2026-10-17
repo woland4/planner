@@ -1,6 +1,6 @@
 <script setup lang="ts">
-    import { ref } from 'vue';
-    import { isNumber } from 'remeda';
+    import { computed, ref } from 'vue';
+    import { isNumber, unique } from 'remeda';
     import { useOverlay } from '@nuxt/ui/composables';
     import { useSessionStorage } from '@vueuse/core';
 
@@ -45,15 +45,34 @@
 
     const popoverData = useSessionStorage<Record<string, { index?: number }>>('picker.popovers', { });
 
+    /*--------
+      Computed
+      --------*/
+
+    const usedFamilies = computed<string[]>(() => {
+        const result: string[] = [ ];
+        for (let i=0; i<5; ++i) {
+            const unit = model.value.units[i];
+            if (unit?.id) result.push(...Units.getFamilies(unit.id, unit.variant));
+            if (unit?.support) result.push(...Units.getFamilies(unit.support));
+        }
+        return unique(result);
+    });
+
     /*-------
       Methods
       -------*/
 
     async function onUnitClick(templateIndex: number) {
-        const modal = unitPickingModal.open({ storageKey: 'main', boosters: props.boosters });
+        const teamIndex = templateIndexToTeamIndex(templateIndex);
+        const modal = unitPickingModal.open({
+            storageKey: 'main',
+            boosters: props.boosters,
+            disabledFamilies: teamIndex === 5 ? null : usedFamilies.value
+        });
         const result = (await modal.result) as Nullable<{ id: number, variant?: number }>;
         if (isNumber(result?.id))
-            model.value.units[templateIndexToTeamIndex(templateIndex)] = { id: result.id, variant: result.variant, support: null };
+            model.value.units[teamIndex] = { id: result.id, variant: result.variant, support: null };
     }
 
     async function onUnitMiddleClick(templateIndex: number) {
@@ -83,7 +102,12 @@
     }
 
     async function onSupportClick(templateIndex: number) {
-        const modal = unitPickingModal.open({ storageKey: 'support', supportedUnitID: getUnitID(templateIndex), supportedVariant: getUnitVariant(templateIndex) });
+        const modal = unitPickingModal.open({
+            storageKey: 'support',
+            supportedUnitID: getUnitID(templateIndex),
+            supportedVariant: getUnitVariant(templateIndex),
+            disabledFamilies: usedFamilies.value
+        });
         const result = (await modal.result) as Nullable<{ id: number }>;
         if (isNumber(result?.id))
             model.value.units[templateIndexToTeamIndex(templateIndex)]!!.support = result.id;

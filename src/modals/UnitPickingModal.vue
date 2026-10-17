@@ -1,5 +1,5 @@
 <script setup lang="ts">
-    import { computed, ref, useTemplateRef } from 'vue';
+    import { computed, onMounted, ref, useTemplateRef } from 'vue';
     import { difference, intersection, isArray, isNullish, isString, sortBy, toTitleCase } from 'remeda';
     import { refDebounced, useSessionStorage, useStorage } from '@vueuse/core';
     import { parse as parseQuery } from 'search-query-parser';
@@ -50,7 +50,9 @@
         noVariants?: boolean,
 
         supportedUnitID?: Nullable<number>,
-        supportedVariant?: Nullable<number>
+        supportedVariant?: Nullable<number>,
+
+        disabledFamilies?: Nullable<string[]>
 
     }>();
 
@@ -332,8 +334,16 @@
             .replace(/^ph$/i, 'powerhouse'));
     }
 
+    function isDisabled(unitID: number,
+                        variant?: Nullable<number>): boolean {
+        if (!props.disabledFamilies?.length) return false;
+        return intersection(props.disabledFamilies, Units.getFamilies(unitID, variant)).length > 0;
+    }
+
     function onSelection(unit: ListItem) {
-        if (props.multiple) {
+        if (isDisabled(unit.id, unit.variant))
+            return;
+        else if (props.multiple) {
             const index = selection.value.findIndex(u => u.id === unit.id && (u.variant ?? 0) === (unit.variant ?? 0));
             if (index !== -1) selection.value.splice(index, 1);
             else selection.value.push(unit);
@@ -386,6 +396,15 @@
     function onClose() {
         emit('close', null);
     }
+
+    /*---------
+      Lifecycle
+      ---------*/
+
+    onMounted(() => {
+        if (responsiveness.isMobile.value) return;
+        requestAnimationFrame(() => headerRef.value?.querySelector('input')?.select());
+    });
 </script>
 
 <template>
@@ -437,7 +456,11 @@
                                    :variant="item.variant"
                                    :llb-level="popoverLlbs[item.id] ?? 0"
                                    :boost="boosterMap[item.id]"
-                                   :class="{ 'border-4! border-red-500! rounded-[10px]!': selection.some(s => s.id === item.id) }"
+                                   :class="{
+                                        'border-4! border-red-500! rounded-[10px]!': selection.some(s => s.id === item.id),
+                                        'grayscale cursor-not-allowed! opacity-50': isDisabled(item.id, item.variant),
+                                        'hover:border-2 hover:border-primary': !isDisabled(item.id, item.variant)
+                                   }"
                                    :popover-data="enablePopovers ? { support: !!props.supportedUnitID, index: popoverIndices[item.id], insideModal: true } : undefined"
                                    :popover-side="enablePopovers ? 'bottom' : undefined"
                                    loading="lazy"
@@ -492,12 +515,6 @@
 
 <style lang="scss">
     #unit-picking-modal {
-
         max-width: 34.5rem;
-
-        .unit-thumbnail:hover {
-            border: 2px solid var(--ui-primary);
-        }
-
     }
 </style>

@@ -85,7 +85,6 @@ export function checkSpecialIssues(team: Nullable<Team>): TeamCompositionIssue[]
   Internals
   ---------*/
 
-// TODO Dual special support
 // TODO Multi-stage support?
 function checkSpecial(team: Team,
                       unitIndex: number): TeamCompositionIssue[] {
