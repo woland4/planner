@@ -1,4 +1,4 @@
-import { intersection, isNullish, keys, values } from 'remeda';
+import { intersection, isFunction, isNullish, isString, keys, values } from 'remeda';
 
 import { type GimmickDetails, GimmickRegistry } from '@/utils/registry.ts';
 import { Numbers } from '@/utils/numbers.ts';
@@ -23,6 +23,22 @@ export const Gimmicks = {
 
     getGimmickDetails(type: Nullable<GimmickEffectType>) {
         return type ? GimmickRegistry[type] as unknown as GimmickDetails<any> : null;
+    },
+
+    getGimmickLabel(gimmick: Nullable<Gimmick>): Nullable<string> {
+        const details = Gimmicks.getGimmickDetails(gimmick?.type);
+        if (!details) return null;
+        else if (isString(details.label)) return details.label;
+        else if (isFunction(details.label)) return details.label(gimmick);
+        else return null;
+    },
+
+    getGimmickIcon(gimmick: Nullable<Gimmick>): Nullable<string> {
+        const details = Gimmicks.getGimmickDetails(gimmick?.type);
+        if (!details) return null;
+        else if (isString(details.icon)) return details.icon;
+        else if (isFunction(details.icon)) return details.icon(gimmick);
+        else return gimmick!!.type;
     },
 
     sanitizeGimmick(gimmick: Nullable<Gimmick>): Nullable<Gimmick> {

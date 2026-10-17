@@ -17,7 +17,8 @@ const TAG_REGEX = /\[((?!STR]|DEX]|QCK]|PSY]|INT])[^\]]+)]/gi;
 const SEPARATOR_REGEX = /(?:\s*,\s*|\s+)(?:and|or)\s+|\s*,\s*|:\s*/g;
 const LEFTOVERS_REGEX = /[\/\[\]]/g;
 
-const OF_THE_FOLLOWING_REGEX = /^(.*?)\s*\bof the following\b:?\s*/i;
+const OF_THE_FOLLOWING_REGEX = /(?:^|[.:]\s*)([^.:]*?)\s*\bof the following\b[^:]*:?\s*/i;
+const COST_FIX_REGEX = /\bcharacters?\s+with\s+(?:a\s+)?cost(?:\s+of)?\b/gi;
 
 const COST_PATTERNS: CostPattern[] = [
     {
@@ -85,7 +86,7 @@ export const Criteria = {
             return result;
         }
 
-        const sanitized = criteria.replace(ALIASES_REGEX, '');
+        const sanitized = criteria.replace(ALIASES_REGEX, '').replace(COST_FIX_REGEX, 'cost');
         const cost = parseCostCriteria(sanitized);
 
         if (ALL_CHARACTERS_REGEX.test(sanitized)) {
@@ -195,7 +196,7 @@ function parseCriteriaTerm(term: string): Nullable<CriteriaCheck> {
     }
 
     const family = normalizeString(remaining.replace(LEFTOVERS_REGEX, ' '));
-    if (family)
+    if (family && Units.isKnownFamily(family))
         checks.push((unitID, variant) => intersects([ family ], Units.getFamilies(unitID, variant)));
 
     if (!checks.length) return null;

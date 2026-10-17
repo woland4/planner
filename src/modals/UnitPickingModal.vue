@@ -1,7 +1,7 @@
 <script setup lang="ts">
     import { computed, ref, useTemplateRef } from 'vue';
     import { difference, intersection, isArray, isNullish, isString, sortBy, toTitleCase } from 'remeda';
-    import { refDebounced, useStorage } from '@vueuse/core';
+    import { refDebounced, useSessionStorage, useStorage } from '@vueuse/core';
     import { parse as parseQuery } from 'search-query-parser';
 
     import UnitThumbnail from '@/components/UnitThumbnail.vue';
@@ -11,15 +11,18 @@
     import { Units } from '@/utils/units.ts';
     import { Enums } from '@/utils/enums.js';
     import { Ui } from '@/utils/ui.ts';
+    import { Html } from '@/utils/html.ts';
 
     import type { DropdownMenuItem } from '@nuxt/ui';
     import type { Booster } from '@/types/battles.ts';
     import type { Nullable } from '@/types/utils.ts';
-    import type { Class, Slot } from '@/types/enums.ts';
+    import type { Class } from '@/types/enums.ts';
 
     /*---------
       Constants
       ---------*/
+
+    const MAX_RECENT_UNITS = 12;
 
     const WACK_IDS = [ 5013, 5014, 5029, 5030, 5031, 5032, 5046, 5047, 5054, 5055, 5056 ];
 
@@ -37,13 +40,18 @@
       -----*/
 
     const props = defineProps<{
+
         storageKey?: string
+
         boosters?: Nullable<Booster[]>,
+
         exclude?: Nullable<number[]>,
         multiple?: boolean,
         noVariants?: boolean,
+
         supportedUnitID?: Nullable<number>,
         supportedVariant?: Nullable<number>
+
     }>();
 
     /*----
@@ -68,16 +76,16 @@
       State
       -----*/
 
-    const query = ref<string>('');
-    const popoverIndices = ref<Record<string, number>>({ });
-    const popoverLlbs = ref<Record<string, number>>({ });
+    const query = useSessionStorage<string>('unitPicking.query.' + (props.storageKey ?? 'any'), '');
     const debouncedQuery = refDebounced(query, 500);
-
-    const recentUnits = (props.storageKey ? useStorage('recentUnits.' + props.storageKey, [ ]) : ref<ListItem[]>([ ]));
 
     const selection = ref<ListItem[]>([ ]);
 
     const enablePopovers = useStorage('unitPicking.popovers', false);
+    const popoverIndices = ref<Record<string, number>>({ });
+    const popoverLlbs = ref<Record<string, number>>({ });
+
+    const recentUnits = (props.storageKey ? useStorage('recentUnits.' + props.storageKey, [ ]) : ref<ListItem[]>([ ]));
 
     /*--------
       Computed
@@ -198,7 +206,7 @@
                 label: 'Types',
                 children: [
                     [ 'STR', 'QCK', 'DEX', 'PSY', 'INT' ].map(t =>
-                        makeFilterItem(`<span class="optc-icon ${ Ui.getSlotIcon(t as Slot) } w-4 h-4 relative top-1"></span> ${ t }`, [ 'type', t ]))
+                        makeFilterItem(Html.optcIcon(Ui.getClassIcon(t)!!, 'relative top-1') + ' ' + t, [ 'type', t ]))
                 ]
             });
         }
@@ -209,7 +217,7 @@
                 label: 'Classes',
                 children: [
                     [ 'Fighter', 'Slasher', 'Striker', 'Shooter', 'Free Spirit', 'Cerebral', 'Powerhouse', 'Driven' ].map(c =>
-                        makeFilterItem(`<span class="optc-icon ${ Ui.getClassIcon(c) } w-4 h-4 relative top-1"></span> ${ c }`, [ 'class', c ]))
+                        makeFilterItem(Html.optcIcon(Ui.getClassIcon(c)!!, 'relative top-1') + ' ' + c, [ 'class', c ]))
                 ]
             });
         }
@@ -219,12 +227,8 @@
             result.push({
                 label: 'Rarity',
                 children: [
-                    [
-                        makeFilterItem('6+', [ 'rarity', '6+' ]),
-                        makeFilterItem('6', [ 'rarity', '6' ]),
-                        makeFilterItem('5+', [ 'rarity', '5+' ]),
-                        makeFilterItem('5', [ 'rarity', '5' ])
-                    ]
+                    [ '6+', '6', '5+', '5' ].map(r =>
+                        makeFilterItem(r, [ 'rarity', r ]))
                 ]
             });
         }
@@ -234,6 +238,7 @@
             label: 'Tags',
             children: [
                 [
+
                     {
                         label: 'Crews',
                         children: [ Enums.tags.crews.map(t => makeFilterItem(t, [ 'tag', t ])) ]
@@ -250,6 +255,7 @@
                         label: 'Arcs',
                         children: [ Enums.tags.arcs.map(t => makeFilterItem(t, [ 'tag', t ])) ]
                     }
+
                 ]
             ]
         });
@@ -335,7 +341,7 @@
             const index = recentUnits.value.findIndex(u => u.id === unit.id && (u.variant ?? 0) === (unit.variant ?? 0));
             if (index !== -1) recentUnits.value.splice(index, 1);
             recentUnits.value.unshift(unit);
-            recentUnits.value = recentUnits.value.slice(0, 9);
+            recentUnits.value = recentUnits.value.slice(0, MAX_RECENT_UNITS);
             emit('close', unit);
         }
     }
@@ -347,7 +353,7 @@
             if (index !== -1) recentUnits.value.splice(index, 1);
             recentUnits.value.unshift(unit);
         }
-        recentUnits.value = recentUnits.value.slice(0, 9);
+        recentUnits.value = recentUnits.value.slice(0, MAX_RECENT_UNITS);
 
         emit('close', selection.value);
 
@@ -394,9 +400,11 @@
                  class="flex gap-1">
 
                 <UInput v-model="query"
-                        :autofocus="responsiveness.isDesktop.value"
+                        :autofocus="responsiveness.isDesktop.value && !query"
+                        id="unit-picking-modal-filter"
                         placeholder="Filter..."
-                        class="w-full" />
+                        class="w-full"
+                        @focus="$event.target?.select()" />
 
                 <UDropdownMenu :items="menuItems"
                                :content="{ onCloseAutoFocus: (e: Event) => e.preventDefault() }">
@@ -449,7 +457,7 @@
                                    :unit-id="unit.id"
                                    :variant="unit.variant"
                                    :boost="boosterMap[unit.id]"
-                                   class="w-12.5 h-12.5 cursor-pointer rounded-[5px]"
+                                   class="w-9 h-9 cursor-pointer rounded-[5px]"
                                    @click="onSelection(unit)" />
                 </div>
 

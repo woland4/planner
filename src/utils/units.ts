@@ -49,7 +49,9 @@ export type Unit = {
         superTurns?: Nullable<number>;
     }>;
 
-    potentials: Nullable<string[]>;
+    sailors: string[];
+
+    potentials: string[];
 
     support: Nullable<{ description: string, condition: string }>;
 
@@ -110,6 +112,11 @@ export const Units = {
 
     getRarity(unitID: Nullable<number>): Nullable<string> {
         return reconstructRarity(unitID);
+    },
+
+    getSailors(unitID: Nullable<number>,
+               variant: Nullable<number> = null): string[] {
+        return reconstructSailors(unitID, variant);
     },
 
     getSuperSpecial(unitID: Nullable<number>,
@@ -255,108 +262,14 @@ function reconstructUnit(unitID: Nullable<number>,
 
         swap: reconstructSwap(unitID),
 
+        sailors: reconstructSailors(unitID, variant),
+
         potentials: reconstructPotentials(unitID),
 
         support: reconstructSupport(unitID)
 
     };
 
-}
-
-function reconstructName(unitID: Nullable<number>,
-                         variant: Nullable<number> = null): Nullable<string> {
-    if (!unitID) return null;
-    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-    return (window.units[fullID] ?? window.units[unitID])?.name ?? null;
-}
-
-function reconstructCost(unitID: Nullable<number>,
-                         variant: Nullable<number> = null): Nullable<number> {
-    if (!unitID) return null;
-    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-    const data = window.units[fullID] ?? window.units[unitID];
-    return data?.cost ?? null;
-}
-
-function reconstructRarity(unitID: Nullable<number>): Nullable<string> {
-    if (!unitID) return null;
-    return window.units[unitID]?.stars ?? null;
-}
-
-function reconstructTypes(unitID: Nullable<number>,
-                          variant: Nullable<number> = null): Type[] {
-    if (!unitID) return [ ];
-    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-    const data = window.units[fullID] ?? window.units[unitID];
-    if (data?.type)
-        return [ data.type ] as Type[];
-    else if (window.units[unitID + '-1']) {
-        return [
-            window.units[unitID + '-1'].type,
-            window.units[unitID + '-2']?.type
-        ].filter(t => !isNullish(t)) as Type[];
-    } else
-        return [ ];
-}
-
-function reconstructClasses(unitID: Nullable<number>,
-                            variant: Nullable<number> = null): Class[] {
-    if (!unitID) return [ ];
-    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-    const data = window.units[fullID] ?? window.units[unitID];
-    if (isString(data?.class))
-        return [ data.class ] as Class[];
-    else if (isArray(data?.class))
-        return data.class as Class[];
-    else if (window.units[unitID + '-1']) {
-        const class1 = (window.units[unitID + '-1']?.class ?? [ ]);
-        const class2 = (window.units[unitID + '-2']?.class ?? [ ]);
-        return unique([
-            (isArray(class1) ? class1 : [ class1 ]),
-            (isArray(class2) ? class2 : [ class2 ])
-        ].flat()) as Class[];
-    } else
-        return [ ];
-}
-
-// DB doesn't support to support variants for this, so the variant parameter is effectively useless
-function reconstructFamilies(unitID: Nullable<number>,
-                             variant: Nullable<number> = null): string[] {
-    if (!unitID) return [ ];
-    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-    return (window.families[fullID] ?? window.families[unitID]) ?? [ ];
-}
-
-function reconstructTags(unitID: Nullable<number>,
-                         variant: Nullable<number> = null): string[] {
-
-    if (!unitID) return [ ];
-
-    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
-    const data = window.tags[fullID] ?? window.tags[unitID] ?? [ ];
-
-    let result;
-    if (!variant)
-        result = data.flat().filter((x, n, a) => a.indexOf(x) === n);
-    else if (data.some(d => isArray(d)))
-        result = (data[variant - 1] as string[]) ?? [ ];
-    else
-        result = (data as string[]) ?? [ ];
-
-    return result
-        .map(t => t.replace(/^Former\s*\/\s*/, ''))
-        .map(t => t.endsWith('/ Devil Fruit User') ? t.match(/(.+?)\s*\/\s*(Devil Fruit User)$/)?.slice(1) ?? t : t)
-        .flat()
-        .map(t => t.trim())
-        .filter(t => !isNullish(t))
-        .filter((x,n,a) => a.indexOf(x) === n);
-
-}
-
-function reconstructLlbLevels(unitID: Nullable<number>): number[] {
-    if (!unitID) return [ ];
-    const details = window.details[unitID]?.lLimit ?? [ ];
-    return [ 1, 2, 3, 4, 5 ].filter(i => details[i - 1]?.captain || details[i - 1]?.special);
 }
 
 function reconstructCaptain(unitID: Nullable<number>,
@@ -396,6 +309,120 @@ function reconstructCaptain(unitID: Nullable<number>,
             captain.base
         );
     }
+
+}
+
+function reconstructClasses(unitID: Nullable<number>,
+                            variant: Nullable<number> = null): Class[] {
+    if (!unitID) return [ ];
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.units[fullID] ?? window.units[unitID];
+    if (isString(data?.class))
+        return [ data.class ] as Class[];
+    else if (isArray(data?.class))
+        return data.class as Class[];
+    else if (window.units[unitID + '-1']) {
+        const class1 = (window.units[unitID + '-1']?.class ?? [ ]);
+        const class2 = (window.units[unitID + '-2']?.class ?? [ ]);
+        return unique([
+            (isArray(class1) ? class1 : [ class1 ]),
+            (isArray(class2) ? class2 : [ class2 ])
+        ].flat()) as Class[];
+    } else
+        return [ ];
+}
+
+function reconstructCost(unitID: Nullable<number>,
+                         variant: Nullable<number> = null): Nullable<number> {
+    if (!unitID) return null;
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.units[fullID] ?? window.units[unitID];
+    return data?.cost ?? null;
+}
+
+// DB doesn't support to support variants for this, so the variant parameter is effectively useless
+function reconstructFamilies(unitID: Nullable<number>,
+                             variant: Nullable<number> = null): string[] {
+    if (!unitID) return [ ];
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    return (window.families[fullID] ?? window.families[unitID]) ?? [ ];
+}
+
+function reconstructLlbLevels(unitID: Nullable<number>): number[] {
+    if (!unitID) return [ ];
+    const details = window.details[unitID]?.lLimit ?? [ ];
+    return [ 1, 2, 3, 4, 5 ].filter(i => details[i - 1]?.captain || details[i - 1]?.special || details[i - 1]?.sailor);
+}
+
+function reconstructName(unitID: Nullable<number>,
+                         variant: Nullable<number> = null): Nullable<string> {
+    if (!unitID) return null;
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    return (window.units[fullID] ?? window.units[unitID])?.name ?? null;
+}
+
+function reconstructPotentials(unitID: Nullable<number>): string[] {
+
+    if (!unitID) return [ ];
+
+    const data = window.details[unitID]?.potential;
+    if (!data?.length) return [ ];
+
+    return data
+        .map(p => p.description[p.description.length - 1])
+        .filter(p => !isNullish(p));
+
+}
+
+function reconstructRarity(unitID: Nullable<number>): Nullable<string> {
+    if (!unitID) return null;
+    return window.units[unitID]?.stars ?? null;
+}
+
+function reconstructSailors(unitID: Nullable<number>,
+                            variant: Nullable<number> = null,
+                            llbLevel: number = 0): string[] {
+
+    if (!unitID) return [ ];
+
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.details[fullID] ?? window.details[unitID];
+    if (!isPlainObject(data)) return [ ];
+
+    const baseKey = variant === 1 ? 'character1' : (variant === 2 ? 'character2' : 'combined');
+
+    const result: (string | Record<string, string>)[] = [ ];
+
+    if (isString(data.sailor))
+        result.push(data.sailor);
+    else if (isPlainObject(data.sailor)) {
+        for (let key of [ 'level1', 'level2', 'level3', 'level4', 'level5', 'level6' ]) {
+            if ((data.sailor as any)[key])
+                result.push((data.sailor as any)[key]);
+        }
+        if (data.sailor[baseKey])
+            result.push(data.sailor[baseKey]);
+    }
+
+    if (llbLevel > 0) {
+        const lLimit = data?.lLimit ?? [ ];
+        for (let i=0; i<llbLevel; ++i) {
+
+            const sailor = lLimit[i]?.sailor;
+            if (!sailor) continue;
+
+            for (let key of [ 'level1', 'level2', 'level3', 'level4', 'level5', 'level6' ]) {
+                if ((sailor as any)[key])
+                    result.push((sailor as any)[key]);
+            }
+
+            if (sailor[baseKey])
+                result.push(sailor[baseKey]);
+
+        }
+    }
+
+    return result.flatMap(r => isString(r) ? r : Object.values(r));
 
 }
 
@@ -472,6 +499,23 @@ function reconstructSuperSpecial(unitID: Nullable<number>,
 
 }
 
+function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: string, condition: string }> {
+
+    if (!unitID) return null;
+
+    const data = window.details[unitID];
+    if (!data.support?.length) return null;
+
+    const last = data.support[data.support.length - 1];
+    if (!last?.description?.length) return null;
+
+    return {
+        description: last.description[last.description.length - 1],
+        condition: last.Characters
+    };
+
+}
+
 function reconstructSwap(unitID: Nullable<number>): Nullable<{ description: string; super?: string; superTurns?: number; }> {
 
     if (!unitID) return null;
@@ -488,34 +532,46 @@ function reconstructSwap(unitID: Nullable<number>): Nullable<{ description: stri
 
 }
 
-function reconstructPotentials(unitID: Nullable<number>): string[] {
+function reconstructTags(unitID: Nullable<number>,
+                         variant: Nullable<number> = null): string[] {
 
     if (!unitID) return [ ];
 
-    const data = window.details[unitID]?.potential;
-    if (!data?.length) return [ ];
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.tags[fullID] ?? window.tags[unitID] ?? [ ];
 
-    return data
-        .map(p => p.description[p.description.length - 1])
-        .filter(p => !isNullish(p));
+    let result;
+    if (!variant)
+        result = data.flat().filter((x, n, a) => a.indexOf(x) === n);
+    else if (data.some(d => isArray(d)))
+        result = (data[variant - 1] as string[]) ?? [ ];
+    else
+        result = (data as string[]) ?? [ ];
+
+    return result
+        .map(t => t.replace(/^Former\s*\/\s*/, ''))
+        .map(t => t.endsWith('/ Devil Fruit User') ? t.match(/(.+?)\s*\/\s*(Devil Fruit User)$/)?.slice(1) ?? t : t)
+        .flat()
+        .map(t => t.trim())
+        .filter(t => !isNullish(t))
+        .filter((x,n,a) => a.indexOf(x) === n);
 
 }
 
-function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: string, condition: string }> {
-
-    if (!unitID) return null;
-
-    const data = window.details[unitID];
-    if (!data.support?.length) return null;
-
-    const last = data.support[data.support.length - 1];
-    if (!last?.description?.length) return null;
-
-    return {
-        description: last.description[last.description.length - 1],
-        condition: last.Characters
-    };
-
+function reconstructTypes(unitID: Nullable<number>,
+                          variant: Nullable<number> = null): Type[] {
+    if (!unitID) return [ ];
+    const fullID = (variant ? `${ unitID }-${ variant }` : unitID);
+    const data = window.units[fullID] ?? window.units[unitID];
+    if (data?.type)
+        return [ data.type ] as Type[];
+    else if (window.units[unitID + '-1']) {
+        return [
+            window.units[unitID + '-1'].type,
+            window.units[unitID + '-2']?.type
+        ].filter(t => !isNullish(t)) as Type[];
+    } else
+        return [ ];
 }
 
 function getSupporterIDs(): number[] {

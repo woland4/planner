@@ -1,6 +1,6 @@
 <script setup lang="ts">
     import { computed } from 'vue';
-    import { groupBy, isFunction, isString, sortBy, uniqueBy } from 'remeda';
+    import { groupBy, isNullish, sortBy, uniqueBy } from 'remeda';
 
     import { useStore } from '@/store.ts';
     import { useResponsiveness } from '@/utils/responsiveness.ts';
@@ -102,29 +102,37 @@
 
     const stageIssues = computed<IssueGroup[]>(() => {
 
-        const stages = store.currentTab?.battle?.stages ?? [ ];
-        if (!stages?.length) return [ ];
+        const battle = store.currentTab?.battle;
+        if (!battle?.stages?.length) return [ ];
 
         const result: IssueGroup[] = [ ];
 
-        for (let n=0; n<stages.length; ++n) {
+        for (let n=0; n<battle.stages.length; ++n) {
 
-            const items = checkGimmicks(stages[n], store.currentTab?.team)
-                .filter(r => r.status !== 'ignored');
+            const items = checkGimmicks(battle, n, store.currentTab?.team);
             if (!items.length)
                 continue;
 
             result.push({
                 title: `Stage ${ n + 1 }`,
                 issues: items.map(i => {
-                    const data = Gimmicks.getGimmickDetails(i.gimmick.type);
-                    return {
-                        title: isString(data?.label) ? data.label : (isFunction(data?.label) ? data.label(i.gimmick) : i.gimmick.type),
-                        icon: (isString(data?.icon) ? data.icon : (isFunction(data?.icon) ? data.icon(i.gimmick) : undefined)) ?? i.gimmick.type,
-                        badge: i.status === 'advisory' ? undefined : i.status.toUpperCase(),
-                        badgeColor: i.status === 'handled' ? 'success' : 'error',
+
+                    const result: Partial<IssueSet> = {
+                        title: Gimmicks.getGimmickLabel(i.gimmick)!!,
+                        icon: Gimmicks.getGimmickIcon(i.gimmick)!!,
                         details: (i.details ?? [ ]).map(text => ({ text }))
                     };
+
+                    if (!isNullish(i.turnsHandled)) {
+                        const fullyHandled = i.turnsHandled >= (i.gimmick.turns ?? 0);
+                        result.badge = `${ Math.min(i.turnsHandled, i.gimmick.turns ?? 0) }/${ i.gimmick.turns }`;
+                        result.badgeColor = fullyHandled ? 'success' : 'error';
+                        if (result.details && !result.details.length)
+                            result.details.push({ text: 'Not handled' });
+                    }
+
+                    return result as IssueSet;
+
                 })
             });
 
@@ -210,7 +218,7 @@
                         <UBadge v-if="issueSet.badge"
                                 :color="issueSet.badgeColor ?? 'info'"
                                 size="xs"
-                                class="font-bold">
+                                class="font-bold py-px">
                             {{ issueSet.badge }}
                         </UBadge>
 

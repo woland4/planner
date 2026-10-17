@@ -1,4 +1,4 @@
-import { isNullish, prop, unique } from 'remeda';
+import { isNullish, unique } from 'remeda';
 
 /*-------
   Exports
@@ -21,14 +21,16 @@ if (IS_DEV) {
         (window as any).Bulletizer = Bulletizer;
         (window as any).Criteria = Criteria;
 
-        (window as any).extractDetails = function(path: string[]): any {
+        (window as any).extract = function(f: (id: any) => any): any {
             const result = [ ];
             for (let i=1; i<10000; ++i) {
-                if (window.details[i])
-                    result.push((prop as any)(window.details[i], ...path));
+                const value = f(i);
+                if (!isNullish(value)) result.push(value);
             }
             return unique(result.filter(r => !isNullish(r)));
-        }
+        };
+
+        (window as any).R = await import('remeda');
 
     })();
 }

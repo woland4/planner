@@ -1,6 +1,6 @@
-import { indexBy } from 'remeda';
+import { indexBy, isNullish } from 'remeda';
 
-import type { Stage, Team } from '@/types/battles.ts';
+import type { Battle, Team } from '@/types/battles.ts';
 import type { Nullable } from '@/types/utils.ts';
 import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
 
@@ -8,20 +8,22 @@ import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
   Exports
   -------*/
 
-export function checkGimmicks(stage: Nullable<Stage>,
+export function checkGimmicks(battle: Nullable<Battle>,
+                              stageIndex: number,
                               team: Nullable<Team>): GimmickCheckResult[] {
 
+    const stage = battle?.stages?.[stageIndex];
     if (!stage?.gimmicks?.length)
         return [ ];
 
     const result = [ ];
     for (let gimmick of stage.gimmicks) {
         const checker = indexedCheckers[gimmick.type];
-        if (checker)
-            result.push(checker.check(gimmick, team));
+        if (checker?.check)
+            result.push(checker.check({ gimmick, battle: battle!!, stageIndex, team }));
     }
 
-    return result;
+    return result.filter(r => r.details?.length || !isNullish(r?.turnsHandled));
 
 }
 

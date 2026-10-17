@@ -7,6 +7,7 @@
 
     import type { Nullable } from '@/types/utils.ts';
     import { type Unit, Units } from '@/utils/units.ts';
+    import { Html } from '@/utils/html.ts';
 
     /*-----
       Types
@@ -58,6 +59,8 @@
                 ...specialSections.value,
                 swapSection.value,
                 superSpecialSection.value,
+                props.hideCaptain ? sailorSection.value : null,
+                potentialSection.value
             ].filter(r => !isNullish(r));
         }
     });
@@ -68,6 +71,15 @@
         return {
             title: 'Captain Ability',
             contents: generateContents(unit.value.captain)
+        };
+    })
+
+    const potentialSection = computed<Nullable<Section>>(() => {
+        if (!unit.value?.potentials?.length)
+            return null;
+        return {
+            title: 'Potential Abilities',
+            contents: Html.bulletize(unit.value.potentials.map(generateContents))
         };
     });
 
@@ -116,6 +128,15 @@
                 generateHeader('Condition') +
                 generateContents(unit.value.superSpecial.condition)
             )
+        };
+    });
+
+    const sailorSection = computed<Nullable<Section>>(() => {
+        if (!unit.value?.sailors?.length)
+            return null;
+        return {
+            title: 'Sailor Abilities',
+            contents: Html.bulletize(unit.value.sailors.map(generateContents))
         };
     });
 

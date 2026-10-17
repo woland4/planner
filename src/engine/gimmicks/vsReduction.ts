@@ -7,7 +7,7 @@ export default {
 
     type: 'vsReduction',
 
-    check(gimmick, team): GimmickCheckResult {
+    check({ gimmick, team }): GimmickCheckResult {
 
         const criteriaText = gimmick
             .targets
@@ -25,7 +25,6 @@ export default {
 
         return {
             gimmick,
-            status: result.length ? 'advisory' : 'ignored',
             details: result
         };
 

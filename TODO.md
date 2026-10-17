@@ -67,7 +67,7 @@
   - [ ] swap
   - [ ] tapLimit
   - [ ] tapTiming
-  - [ ] targetLock
+  - [x] targetLock
   - [ ] territory
   - [ ] timingBarrier
   - [ ] typeUp

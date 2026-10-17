@@ -1,3 +1,5 @@
+import { isNullish } from 'remeda';
+
 import { Units } from '@/utils/units.ts';
 
 import type { Type } from '@/types/enums.ts';
@@ -23,11 +25,22 @@ export const Html = {
         }
     },
 
+    bulletize(bullets: Nullable<Nullable<string>[]>): string {
+        const sanitized = (bullets ?? [ ]).filter(s => !isNullish(s));
+        if (!sanitized.length) return '';
+        else return `<ul class="list-disc pl-4">${ sanitized.join('') }</ul>`;
+    },
+
     decorateUnit(unitID: number,
                  variant?: Nullable<number>): string {
         const unitName = Units.getName(unitID, variant)?.replace(/^(.+) - .+$/, '$1') ?? '';
         const unitType = Units.getTypes(unitID, variant)?.[0];
         return Html.addTypeColoring(unitName, unitType);
+    },
+
+    optcIcon(name: string,
+             additionalClasses?: string): string {
+        return `<span class="optc-icon ${ name } w-4 h-4 ${ additionalClasses ?? '' }"></span>`;
     },
 
     textToHTML(text: string): string {

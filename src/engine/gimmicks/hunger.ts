@@ -1,7 +1,9 @@
-import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
 import { Html } from '@/utils/html.ts';
-import { Units } from '@/utils/units.ts';
-import { isNullish } from 'remeda';
+import { Engine } from '@/utils/engine.ts';
+
+import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
+
+// TODO Check for specials/supers/swaps that give RCV orbs?
 
 const HUNGER_REGEX = /reduces hunger stack by (\d+) stack/i;
 
@@ -9,34 +11,21 @@ export default {
 
     type: 'hunger',
 
-    check(gimmick, team): GimmickCheckResult {
+    check({ gimmick, team }): GimmickCheckResult {
 
-        let covered = 0;
-        const details = [ ];
+        let turnsHandled = 0;
+        const details: string[] = [ ];
 
-        for (let index of [ 5, 0, 4, 1, 3, 2 ]) {
-
-            const unit = team?.units?.[index];
-            if (!unit) continue;
-
-            const potentials = Units.getPotentials(unit?.id);
-            if (!potentials.length) continue;
-
-            const reduction = potentials
-                .map(p => p.match(HUNGER_REGEX)?.[1])
-                .filter(m => !isNullish(m))
-                .map(p => parseInt(p, 10))
-                .reduce((p,n) => p + n, 0);
-            if (reduction <= 0) continue;
-
-            covered += reduction;
-            details.push(`${ reduction } turn${ reduction === 1 ? '' : 's' } reduced by ${ Html.decorateUnit(unit.id, unit.variant) }`);
-
-        }
+        Engine.extractPotentials(team, HUNGER_REGEX).forEach((potentials, unitID) => {
+            const unit = team?.units[unitID]!!;
+            const turns = parseInt(potentials[0].match(HUNGER_REGEX)!![1], 10);
+            turnsHandled += turns;
+            details.push(`${ turns } turn${ turns === 1 ? '' : 's' } reduced by ${ Html.decorateUnit(unit.id, unit.variant) }'s potential ability`);
+        });
 
         return {
             gimmick,
-            status: covered >= (gimmick.turns ?? 0) ? 'handled' : 'unhandled',
+            turnsHandled,
             details
         };
 

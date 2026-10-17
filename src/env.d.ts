@@ -94,6 +94,28 @@ interface Window {
                   description: string[];
               }[];
 
+        sailor ?:
+            | null
+            | undefined
+            | string
+            | {
+
+                    base?: string;
+
+                    level1?: string;
+                    level2?: string;
+                    level3?: string;
+                    level4?: string;
+                    level5?: string;
+                    level6?: string;
+
+                    character1?: string | { base?: string; base2?: string; };
+                    character2?: string | { base?: string; base2?: string; };
+                    combined?: string;
+
+
+              };
+
         special?:
             | string
             | { cooldown: number[], description: string }[]
