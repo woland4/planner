@@ -92,7 +92,10 @@
 
         const groups = groupBy(sorted, i => i.index);
 
-        return Object.entries(groups).map(([ key, issues ]) => {
+        const entries = sortBy(Object.entries(groups),
+            e => [ '5', '0', '4', '1', '3', '2' ].indexOf(e[0]));
+        
+        return entries.map(([ key, issues ]) => {
 
             const index = parseInt(key, 10);
             const unit = team.units[index]!!;
