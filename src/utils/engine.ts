@@ -6,6 +6,21 @@ import type { GimmickType } from '@/types/enums.ts';
 
 export const Engine = {
 
+    extractExhaustibleCaptains(team: Nullable<Team>,
+                               regex: RegExp,
+                               battle: Battle,
+                               untilStageIndexIncluded: number,
+                               exhaustedWhen: GimmickType): Map<number, string> {
+
+        for (let i=0; i<=untilStageIndexIncluded; ++i) {
+            if (battle.stages?.[i]?.gimmicks?.some(g => g.type === exhaustedWhen))
+                return new Map();
+        }
+
+        return Engine.extractCaptains(team, regex);
+
+    },
+
     extractExhaustibleSailors(team: Nullable<Team>,
                               regex: RegExp,
                               battle: Battle,
@@ -20,6 +35,22 @@ export const Engine = {
                 result = new Map([ ...result ].filter(v => /once per adventure/i.test(v[1])));
         }
 
+        return result;
+
+    },
+
+    extractCaptains(team: Nullable<Team>,
+                    regex?: RegExp): Map<number, string> {
+
+        if (!team?.units?.length)
+            return new Map();
+
+        const result = new Map();
+        for (let i of [ 5, 0 ]) {
+            let captain = Units.getCaptain(team.units[i]?.id);
+            if (captain && (!regex || regex.test(captain)))
+                result.set(i, captain);
+        }
         return result;
 
     },

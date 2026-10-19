@@ -11,12 +11,11 @@
   - Add optional notes to gimmicks? eg "Only if 4+ giants in the team"
   - JSON optimization? merge etc.
   - Add LLB badge in team screenshot
+  - Unmet sailor conditions
 - Gimmicks:
   - [ ] attackDown
   - [ ] attackDownAboveChain
   - [ ] attackDownBelowChain
-  - [ ] attackUp
-  - [x] beneficialEffectRemoval
   - [ ] bind
   - [ ] bleed
   - [ ] blindness
@@ -41,7 +40,6 @@
   - [ ] increasedDamage
   - [ ] intimidation
   - [ ] lockSlots
-  - [x] nao
   - [ ] noPotentialAbilities
   - [ ] noRcv
   - [ ] pain
@@ -56,21 +54,25 @@
   - [ ] slotChange
   - [ ] slotDamageReduction
   - [ ] slotMultiplierChange
-  - [ ] slotUp
   - [ ] specialBind
   - [ ] specialLimit
   - [ ] specialLock
   - [ ] specialReverse
   - [ ] stun
   - [x] superSwitchReduction
-  - [x] superTyping
   - [ ] swap
   - [ ] tapLimit
   - [ ] tapTiming
   - [x] targetLock
   - [ ] territory
   - [ ] timingBarrier
-  - [ ] typeUp
   - [ ] unfavorableSlots
   - [x] vsReduction
-  - [x] weakness
+- Gimmicks?:
+  - [ ] attackUp
+  - [ ] beneficialEffectRemoval
+  - [ ] nao
+  - [ ] slotUp
+  - [ ] superTyping
+  - [ ] typeUp
+  - [ ] weakness

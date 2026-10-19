@@ -1,32 +1,43 @@
+import { EngineNew } from '@/utils/engine.new.ts';
+import { Numbers } from '@/utils/numbers.ts';
 import { Html } from '@/utils/html.ts';
-import { Engine } from '@/utils/engine.ts';
 
 import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
+import type { Nullable } from '@/types/utils.ts';
 
-// TODO Check for specials/supers/swaps that give RCV orbs?
-
-const HUNGER_REGEX = /reduces hunger stack by (\d+) stack/i;
+/**
+ * Sources of resolution:
+ * - Potential abilities (reduces hunger stack by N stack(s))
+ * - Special/supers/swaps that give RCV orbs? TODO
+ */
 
 export default {
 
     type: 'hunger',
 
-    check({ gimmick, team }): GimmickCheckResult {
+    check({ gimmick, team, battle, stageIndex }): Nullable<GimmickCheckResult> {
+
+        const matches = EngineNew.search(team, battle, stageIndex, {
+            potential: /reduces hunger stack by (?<stacks>\d+) stack/i
+        });
 
         let turnsHandled = 0;
         const details: string[] = [ ];
 
-        Engine.extractPotentials(team, HUNGER_REGEX).forEach((potentials, unitID) => {
-            const unit = team?.units[unitID]!!;
-            const turns = parseInt(potentials[0].match(HUNGER_REGEX)!![1], 10);
-            turnsHandled += turns;
-            details.push(`${ turns } turn${ turns === 1 ? '' : 's' } reduced by ${ Html.decorateUnit(unit.id, unit.variant) }'s potential ability`);
-        });
+        matches.potential?.forEach((matches, index) => matches.forEach(match => {
+
+            const stacks = Numbers.parseIntOr(match.groups.stacks, 99);
+            turnsHandled += stacks;
+
+            const unit = team?.units[index]!!;
+            details.push(`${ stacks } stack${ stacks === 1 ? '' : 's' } reduced by ${ Html.decorateUnit(unit.id, unit.variant) }'s potential ability`);
+
+        }));
 
         return {
             gimmick,
             turnsHandled,
-            details
+            details: !details.length ? [ 'Not handled' ] : details
         };
 
     }

@@ -1,4 +1,5 @@
 import type { Nullable } from '@/types/utils.ts';
+import { isNullish } from 'remeda';
 
 export const Numbers = {
 
@@ -16,6 +17,12 @@ export const Numbers = {
 
     isPositiveInteger(value: Nullable<any>): boolean {
         return Numbers.isInteger(value) && value > 0;
+    },
+
+    parseIntOr(value: Nullable<string>, defaultIfNaN: number): number {
+        if (isNullish(value) || !/^\d+$/.test(value)) return defaultIfNaN;
+        const result = parseInt(value, 10);
+        return isNaN(result) ? defaultIfNaN : result;
     }
 
 };

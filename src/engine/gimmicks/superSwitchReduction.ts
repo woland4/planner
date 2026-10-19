@@ -1,13 +1,15 @@
 import { Criteria } from '@/utils/criteria.ts';
 
-import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
 import { Html } from '@/utils/html.ts';
+
+import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
+import type { Nullable } from '@/types/utils.ts';
 
 export default {
 
     type: 'superSwitchReduction',
 
-    check({ gimmick, team }): GimmickCheckResult {
+    check({ gimmick, team }): Nullable<GimmickCheckResult> {
 
         const criteriaText = gimmick
             .targets

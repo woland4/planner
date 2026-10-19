@@ -94,7 +94,7 @@
 
         const entries = sortBy(Object.entries(groups),
             e => [ '5', '0', '4', '1', '3', '2' ].indexOf(e[0]));
-        
+
         return entries.map(([ key, issues ]) => {
 
             const index = parseInt(key, 10);
@@ -141,8 +141,6 @@
                         const fullyHandled = i.turnsHandled >= (i.gimmick.turns ?? 0);
                         result.badge = `${ Math.min(i.turnsHandled, i.gimmick.turns ?? 0) }/${ i.gimmick.turns }`;
                         result.badgeColor = fullyHandled ? 'success' : 'error';
-                        if (result.details && !result.details.length)
-                            result.details.push({ text: 'Not handled' });
                     }
 
                     return result as IssueSet;
@@ -216,7 +214,7 @@
                   container: 'h-full pt-(--sidebar-padding-top)',
                   inner: 'bg-elevated/25',
                   header: 'p-4 min-h-auto',
-                  body: 'p-2 text-[11px] gap-2'
+                  body: 'p-2 text-[11px] block'
               }"
               :style="{
                   '--sidebar-width': 'var(--sidebar-right-width-desktop)',
@@ -233,6 +231,7 @@
             <UCard v-for="(group,n) in issues"
                    :key="n"
                    :ui="{
+                       root: n > 0 ? 'mt-2' : null,
                        header: 'p-1.5! bg-black/50 leading-none font-bold',
                        title: 'flex justify-between items-center',
                        body: 'p-2! flex flex-col gap-[5px]'
