@@ -21,7 +21,7 @@ export default {
     check(context): Nullable<GimmickCheckResult> {
 
         return {
-            gimmick,
+            gimmick: context.gimmick,
             details: [ ]
         };
 

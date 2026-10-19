@@ -39,8 +39,8 @@ export default {
             superSpecial: EXTRACTION_REGEX,
             swap: EXTRACTION_REGEX,
 
-            exhaustibleSupport: {
-                searchFor: SUPPORT_REGEX,
+            support: {
+                regex: SUPPORT_REGEX,
                 exhaustedBy: 'pain'
             }
 

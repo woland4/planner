@@ -3,31 +3,25 @@ import { Units } from '@/utils/units.ts';
 import type { Battle, Team } from '@/types/battles.ts';
 import type { Nullable } from '@/types/utils.ts';
 import type { GimmickType } from '@/types/enums.ts';
+import { isPlainObject } from 'remeda';
 
 /*-----
   Types
   -----*/
 
 export type SearchParams = {
-
-    captain?: RegExp;
+    captain?: RegExpOrExhaustible;
     potential?: RegExp;
-    sailor?: RegExp;
+    sailor?: RegExpOrExhaustible;
     special?: RegExp;
     superSpecial?: RegExp;
-    support?: RegExp;
+    support?: RegExpOrExhaustible;
     swap?: RegExp;
-
-    exhaustibleCaptain?: SearchParamsExhaustible;
-    exhaustibleSailor?: SearchParamsExhaustible;
-    exhaustibleSupport?: SearchParamsExhaustible;
-
 };
 
-export type SearchParamsExhaustible = {
-    searchFor: RegExp;
-    exhaustedBy: GimmickType;
-};
+export type RegExpOrExhaustible =
+    | RegExp
+    | { regex: RegExp; exhaustedBy: GimmickType; };
 
 export type SearchResult = {
 
@@ -64,26 +58,19 @@ export const EngineNew = {
         const result: SearchResult[] = [ ];
 
         if (params.captain)
-            result.push(...extractCaptains(team, params.captain));
+            result.push(...extractCaptains(team, battle, stageIndex, params.captain));
         if (params.potential)
             result.push(...extractPotentials(team, params.potential));
         if (params.sailor)
-            result.push(...extractSailors(team, params.sailor));
+            result.push(...extractSailors(team, battle, stageIndex, params.sailor));
         if (params.special)
             result.push(...extractSpecials(team, params.special));
         if (params.superSpecial)
             result.push(...extractSuperSpecials(team, params.superSpecial));
         if (params.support)
-            result.push(...extractSupports(team, params.support));
+            result.push(...extractSupports(team, battle, stageIndex, params.support));
         if (params.swap)
             result.push(...extractSwaps(team, params.swap));
-
-        if (params.exhaustibleCaptain)
-            result.push(...extractExhaustibleCaptains(team, params.exhaustibleCaptain.searchFor, battle, stageIndex - 1, params.exhaustibleCaptain.exhaustedBy));
-        if (params.exhaustibleSailor)
-            result.push(...extractExhaustibleSailors(team, params.exhaustibleSailor.searchFor, battle, stageIndex - 1, params.exhaustibleSailor.exhaustedBy));
-        if (params.exhaustibleSupport)
-            result.push(...extractExhaustibleSupports(team, params.exhaustibleSupport.searchFor, battle, stageIndex - 1, params.exhaustibleSupport.exhaustedBy));
 
         return result;
 
@@ -120,64 +107,22 @@ export const EngineNew = {
   Internals
   ---------*/
 
-function extractExhaustibleCaptains(team: Nullable<Team>,
-                                    regex: RegExp,
-                                    battle: Battle,
-                                    untilStageIndexIncluded: number,
-                                    exhaustedWhen: GimmickType): SearchResult[] {
+function extractCaptains(team: Team,
+                         battle: Battle,
+                         stageIndex: number,
+                         params: RegExpOrExhaustible): SearchResult[] {
 
-    for (let i=0; i<=untilStageIndexIncluded; ++i) {
-        if (battle.stages?.[i]?.gimmicks?.some(g => g.type === exhaustedWhen))
-            return [ ];
-    }
-
-    return extractCaptains(team, regex);
-
-}
-
-function extractExhaustibleSailors(team: Nullable<Team>,
-                                   regex: RegExp,
-                                   battle: Battle,
-                                   untilStageIndexIncluded: number,
-                                   exhaustedWhen: GimmickType): SearchResult[] {
-
-    const sailors = extractSailors(team, regex);
-    if (!sailors.length) return [ ];
-
-    let isExhausted = false;
-    for (let i=0; i<=untilStageIndexIncluded; ++i) {
-        if (battle.stages?.[i]?.gimmicks?.some(g => g.type === exhaustedWhen)) {
-            isExhausted = true;
-            break;
+    if (isPlainObject(params)) {
+        for (let i=0; i<stageIndex; ++i) {
+            if (battle.stages?.[i]?.gimmicks?.some(g => g.type === params.exhaustedBy))
+                return [ ];
         }
     }
-
-    if (!isExhausted) return sailors;
-    else return sailors.filter(s => !/once per adventure/i.test(s.text));
-
-}
-
-function extractExhaustibleSupports(team: Nullable<Team>,
-                                    regex: RegExp,
-                                    battle: Battle,
-                                    untilStageIndexIncluded: number,
-                                    exhaustedWhen: GimmickType): SearchResult[] {
-
-    for (let i=0; i<=untilStageIndexIncluded; ++i) {
-        if (battle.stages?.[i]?.gimmicks?.some(g => g.type === exhaustedWhen))
-            return [ ];
-    }
-
-    return extractSupports(team, regex);
-
-}
-
-function extractCaptains(team: Nullable<Team>,
-                         regex: RegExp): SearchResult[] {
 
     if (!team?.units?.length)
         return [ ];
 
+    const regex = isPlainObject(params) ? params.regex : params as RegExp;
     const result: SearchResult[] = [ ];
     for (let i of [ 5, 0 ]) {
 
@@ -194,7 +139,7 @@ function extractCaptains(team: Nullable<Team>,
 
 }
 
-function extractPotentials(team: Nullable<Team>,
+function extractPotentials(team: Team,
                            regex: RegExp): SearchResult[] {
 
     if (!team?.units?.length)
@@ -217,12 +162,15 @@ function extractPotentials(team: Nullable<Team>,
 
 }
 
-function extractSailors(team: Nullable<Team>,
-                        regex: RegExp): SearchResult[] {
+function extractSailors(team: Team,
+                        battle: Battle,
+                        stageIndex: number,
+                        params: RegExpOrExhaustible): SearchResult[] {
 
     if (!team?.units?.length)
         return [ ];
 
+    const regex = isPlainObject(params) ? params.regex : params as RegExp;
     const result: SearchResult[] = [ ];
     for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
 
@@ -237,11 +185,19 @@ function extractSailors(team: Nullable<Team>,
         }
 
     }
+
+    if (isPlainObject(params)) {
+        for (let i=0; i<stageIndex; ++i) {
+            if (battle.stages?.[i]?.gimmicks?.some(g => g.type === params.exhaustedBy))
+                return result.filter(s => !/once per adventure/i.test(s.text));
+        }
+    }
+
     return result;
 
 }
 
-function extractSpecials(team: Nullable<Team>,
+function extractSpecials(team: Team,
                          regex: RegExp): SearchResult[] {
 
     if (!team?.units?.length)
@@ -264,7 +220,7 @@ function extractSpecials(team: Nullable<Team>,
 
 }
 
-function extractSuperSpecials(team: Nullable<Team>,
+function extractSuperSpecials(team: Team,
                               regex: RegExp): SearchResult[] {
 
     if (!team?.units?.length)
@@ -286,11 +242,20 @@ function extractSuperSpecials(team: Nullable<Team>,
 
 }
 
-function extractSupports(team: Nullable<Team>,
-                         regex: RegExp): SearchResult[] {
+function extractSupports(team: Team,
+                         battle: Battle,
+                         stageIndex: number,
+                         params: RegExpOrExhaustible): SearchResult[] {
 
-    if (!team?.units?.length)
+    if (!team.units?.length)
         return [ ];
+
+    if (isPlainObject(params)) {
+        for (let i=0; i<stageIndex; ++i) {
+            if (battle.stages?.[i]?.gimmicks?.some(g => g.type === params.exhaustedBy))
+                return [ ];
+        }
+    }
 
     const result: SearchResult[] = [ ];
     for (let i of [ 0, 4, 1, 3, 2 ]) {
@@ -299,6 +264,7 @@ function extractSupports(team: Nullable<Team>,
         const support = Units.getSupport(unit?.support);
         if (!support?.description) continue;
 
+        const regex = isPlainObject(params) ? params.regex : params as RegExp;
         const matches = support.description.match(regex);
         if (matches)
             result.push({ source: 'support', index: i, text: support.description, matches: matches ?? [ ], groups: matches?.groups ?? { } });
@@ -308,7 +274,7 @@ function extractSupports(team: Nullable<Team>,
 
 }
 
-function extractSwaps(team: Nullable<Team>,
+function extractSwaps(team: Team,
                       regex: RegExp): SearchResult[] {
 
     if (!team?.units?.length)
