@@ -18,7 +18,7 @@ export default {
 
     type: 'attackDown',
 
-    check({ gimmick, team, battle, stageIndex }): Nullable<GimmickCheckResult> {
+    check(context): Nullable<GimmickCheckResult> {
 
         return {
             gimmick,

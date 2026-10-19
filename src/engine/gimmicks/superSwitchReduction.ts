@@ -9,9 +9,9 @@ export default {
 
     type: 'superSwitchReduction',
 
-    check({ gimmick, team }): Nullable<GimmickCheckResult> {
+    check(context): Nullable<GimmickCheckResult> {
 
-        const criteriaText = gimmick
+        const criteriaText = context.gimmick
             .targets
             .map(t => t.replace(/^(STR|QCK|DEX|PSY|INT)$/, '[$1]'))
             .join(', ');
@@ -20,13 +20,13 @@ export default {
 
         const result = [ ];
         for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
-            const unit = team?.units?.[i];
+            const unit = context.team.units?.[i];
             if (unit?.id && !criteria(unit.id, unit.variant))
                 result.push(`${ Html.decorateUnit(unit.id, unit.variant) } is not affected`);
         }
 
         return {
-            gimmick,
+            gimmick: context.gimmick,
             details: result
         };
 

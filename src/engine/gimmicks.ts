@@ -16,14 +16,22 @@ export function checkGimmicks(battle: Nullable<Battle>,
     if (!stage?.gimmicks?.length)
         return [ ];
 
-    const result = [ ];
+    const result: Nullable<GimmickCheckResult>[] = [ ];
     for (let gimmick of stage.gimmicks) {
         const checker = indexedCheckers[gimmick.type];
-        if (checker?.check)
-            result.push(checker.check({ gimmick, battle: battle!!, stageIndex, team }));
+        if (checker?.check) {
+            result.push(checker.check({
+                gimmick,
+                battle: battle!!,
+                stageIndex,
+                team: team ?? { units: [ null, null, null, null, null, null ] }
+            }));
+        }
     }
 
-    return result.filter(r => r.details?.length || !isNullish(r?.turnsHandled));
+    return result
+        .filter(r => !isNullish(r))
+        .filter(r => r?.details?.length || !isNullish(r?.turnsHandled));
 
 }
 

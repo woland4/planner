@@ -31,9 +31,9 @@ export default {
 
     type: 'pain',
 
-    check({ gimmick, team, battle, stageIndex }): Nullable<GimmickCheckResult> {
+    check(context): Nullable<GimmickCheckResult> {
 
-        const matches = EngineNew.search(team, battle, stageIndex, {
+        const matches = EngineNew.search(context, {
 
             special: EXTRACTION_REGEX,
             superSpecial: EXTRACTION_REGEX,
@@ -47,20 +47,19 @@ export default {
         });
 
         const result: { index: number, source: string, turns: number }[] = [ ];
-        matches.special?.forEach((match, index) =>
-            result.push({ index, source: 'special', turns: Numbers.parseIntOr(match.groups.turns, 99) }));
-        matches.superSpecial?.forEach((match, index) =>
-            result.push({ index, source: 'super special', turns: Numbers.parseIntOr(match.groups.turns, 99) }));
-        matches.swap?.forEach((matches, index) => matches.forEach(match =>
-            result.push({ index, source: 'swap', turns: Numbers.parseIntOr(match.groups.turns, 99) })))
-        matches.exhaustibleSupport?.forEach((match, index) =>
-            result.push({ index, source: 'support', turns: Numbers.parseIntOr(match.groups.turns, 99) }));
+        matches.forEach(match => {
+            result.push({
+                index: match.index,
+                source: match.source,
+                turns: Numbers.parseIntOr(match.groups.turns, 99)
+            });
+        });
 
         return {
-            gimmick,
+            gimmick: context.gimmick,
             turnsHandled: result.reduce((p,n) => p + n.turns, 0),
             details: !result.length ? [ 'Not handled' ] : result.map(({ index, source, turns }) => {
-                const unit = team?.units[index]!!;
+                const unit = context.team.units[index]!!;
                 return `${ turns } turn${ turns === 1 ? '' : 's' } reduced by ${ Html.decorateUnit(unit.id, unit.variant) }'s ${ source }`;
             })
         };
