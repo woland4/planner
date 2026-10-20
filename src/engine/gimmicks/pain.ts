@@ -1,4 +1,4 @@
-import { EngineNew } from '@/utils/engine.new.ts';
+import { Engine } from '@/utils/engine.ts';
 import { Numbers } from '@/utils/numbers.ts';
 import { Html } from '@/utils/html.ts';
 
@@ -16,8 +16,8 @@ import type { Nullable } from '@/types/utils.ts';
  */
 
 const EXTRACTION_REGEX = new RegExp([
-    EngineNew.Effects.reducesDuration('pain'),
-    EngineNew.Effects.removesDuration('pain'),
+    Engine.Effects.reducesDuration('pain'),
+    Engine.Effects.removesDuration('pain'),
 ].join('|'), 'i');
 
 /*-------
@@ -30,7 +30,7 @@ export default {
 
     check(context): Nullable<GimmickCheckResult> {
 
-        const matches = EngineNew.search(context, {
+        const matches = Engine.search(context, {
             captain: EXTRACTION_REGEX,
             special: EXTRACTION_REGEX,
             superSpecial: EXTRACTION_REGEX,

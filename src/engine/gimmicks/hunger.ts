@@ -1,4 +1,4 @@
-import { EngineNew } from '@/utils/engine.new.ts';
+import { Engine } from '@/utils/engine.ts';
 import { Numbers } from '@/utils/numbers.ts';
 import { Html } from '@/utils/html.ts';
 
@@ -17,7 +17,7 @@ export default {
 
     check(context): Nullable<GimmickCheckResult> {
 
-        const matches = EngineNew.search(context, {
+        const matches = Engine.search(context, {
             potential: /reduces hunger stack by (?<stacks>\d+) stack/i
         });
 

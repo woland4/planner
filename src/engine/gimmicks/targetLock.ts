@@ -1,4 +1,4 @@
-import { EngineNew } from '@/utils/engine.new.ts';
+import { Engine } from '@/utils/engine.ts';
 import { Html } from '@/utils/html.ts';
 
 import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
@@ -15,7 +15,7 @@ export default {
 
     check(context): Nullable<GimmickCheckResult> {
 
-        const matches = EngineNew.search(context, {
+        const matches = Engine.search(context, {
             special: /removes target lock duration completely/i
         });
 

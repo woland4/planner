@@ -1,5 +1,5 @@
 import { Html } from '@/utils/html.ts';
-import { EngineNew } from '@/utils/engine.new.ts';
+import { Engine } from '@/utils/engine.ts';
 
 import { Numbers } from '@/utils/numbers.ts';
 
@@ -34,7 +34,7 @@ export default {
             };
         }
 
-        const matches = EngineNew.search(context, {
+        const matches = Engine.search(context, {
             captain: CAPTAIN_REGEX,
             special: OTHER_REGEX,
             superSpecial: OTHER_REGEX,
