@@ -23,7 +23,7 @@ export default {
             gimmick: context.gimmick,
             turnsHandled: matches.length ? 99 : 0,
             details: !matches.length ? [ 'Not handled' ] : matches.map(match => {
-                const unit = context.team.units[match.index]!!;
+                const unit = context.team.units[match.index]!;
                 return `Removed by ${ Html.decorateUnit(unit.id, unit.variant) }'s special`;
             })
         };

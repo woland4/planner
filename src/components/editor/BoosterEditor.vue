@@ -62,9 +62,9 @@
     const summary = computed(() => {
         const result = [ ];
         if (Numbers.isPositive(model.value.pureMultiplier))
-            result.push(`${ numberFormatter.format(model.value.pureMultiplier!!) }x boost`);
+            result.push(`${ numberFormatter.format(model.value.pureMultiplier!) }x boost`);
         else if (Numbers.isPositive(model.value.additiveMultiplier))
-            result.push(`${ numberFormatter.format(model.value.additiveMultiplier!!) }x boost`);
+            result.push(`${ numberFormatter.format(model.value.additiveMultiplier!) }x boost`);
         return result.length ? result.join(', ') : null;
     });
 
@@ -76,7 +76,7 @@
         const modal = unitPickingModal.open({ storageKey: 'booster', exclude: model.value.ids, multiple: true, noVariants: true });
         const result = (await modal.result) as Nullable<{ id: number, variant?: number }[]>;
         if ((result?.length ?? 0) > 0) // TODO Fix for variant support
-            model.value.ids = unique([ ...(model.value.ids ?? [ ]), ...(result!!.map(u => u.id) ?? [ ]) ]);
+            model.value.ids = unique([ ...(model.value.ids ?? [ ]), ...(result!.map(u => u.id) ?? [ ]) ]);
     }
 </script>
 

@@ -98,10 +98,10 @@
         return entries.map(([ key, issues ]) => {
 
             const index = parseInt(key, 10);
-            const unit = team.units[index]!!;
+            const unit = team.units[index]!;
 
             return {
-                name: Html.decorateUnit(unit.id, unit.variant)!!,
+                name: Html.decorateUnit(unit.id, unit.variant)!,
                 issues: issues.map(i => ({
                     badge: i.badge,
                     badgeClass: getTeamCompBadgeClass(i.badge),
@@ -132,8 +132,8 @@
                 issues: items.map(i => {
 
                     const result: Partial<IssueSet> = {
-                        title: Gimmicks.getGimmickLabel(i.gimmick)!!,
-                        icon: Gimmicks.getGimmickIcon(i.gimmick)!!,
+                        title: Gimmicks.getGimmickLabel(i.gimmick)!,
+                        icon: Gimmicks.getGimmickIcon(i.gimmick)!,
                         details: (i.details ?? [ ]).map(text => ({ text }))
                     };
 

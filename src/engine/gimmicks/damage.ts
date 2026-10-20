@@ -53,7 +53,7 @@ export default {
         return {
             gimmick,
             details: !result.length ? [ 'Not handled' ] : result.map(({ index, source, reduction }) => {
-                const unit = team?.units[index]!!;
+                const unit = team.units[index]!;
                 return `Reduced${ reduction ? ' by ' + reduction : '' } by ${ Html.decorateUnit(unit.id, unit.variant) }'s ${ source }`;
             })
         };

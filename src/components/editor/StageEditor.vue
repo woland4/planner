@@ -159,14 +159,14 @@
                           v-model="model.enemies"
                           handle=".enemy-drag">
                 <EnemyEditor v-for="(_, n) in model.enemies"
-                             v-model="model.enemies!![n]"
+                             v-model="model.enemies![n]"
                              :key="n"
                              :validation="props.validation?.enemies?.[n]"
                              :class="{
                                  'max-md:pt-3.5 max-md:mt-3.5 max-md:border-t max-md:border-accented': n > 0,
                                  'mb-1.5!': n < model.enemies.length - 1
                              }"
-                             @remove="model.enemies!!.splice(n, 1)"
+                             @remove="model.enemies!.splice(n, 1)"
                              @tab="e => onEnemyTab(e, n)" />
             </VueDraggable>
 
@@ -192,14 +192,14 @@
                           v-model="model.gimmicks"
                           handle=".gimmick-drag">
                 <GimmickEditor v-for="(_, n) in model.gimmicks"
-                               v-model="model.gimmicks!![n]"
+                               v-model="model.gimmicks![n]"
                                :key="n"
                                :validation="props.validation?.gimmicks?.[n]"
                                :class="{
                                    'max-md:pt-3.5 max-md:mt-3.5 max-md:border-t max-md:border-accented': n > 0,
                                    'mb-1.5!': n < model.gimmicks.length - 1
                                }"
-                               @remove="model.gimmicks!!.splice(n, 1)"
+                               @remove="model.gimmicks!.splice(n, 1)"
                                @tab="e => onGimmickTab(e, n)" />
             </VueDraggable>
 

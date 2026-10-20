@@ -242,9 +242,9 @@ function reconstructUnit(unitID: Nullable<number>,
         variant,
         llbLevel,
 
-        name: reconstructName(unitID, variant)!!,
-        cost: reconstructCost(unitID)!!,
-        rarity: reconstructRarity(unitID)!!,
+        name: reconstructName(unitID, variant)!,
+        cost: reconstructCost(unitID)!,
+        rarity: reconstructRarity(unitID)!,
         isDual: Units.isDual(unitID),
         isVS: isVS,
 
@@ -287,7 +287,7 @@ function reconstructCaptain(unitID: Nullable<number>,
         const lLimit = data?.lLimit ?? [ ];
         for (let i=llbLevel-1; i>=0; --i) {
             if (!isNullish(lLimit[i]?.captain)) {
-                captain = lLimit[i].captain!!;
+                captain = lLimit[i].captain!;
                 break;
             }
         }
@@ -442,7 +442,7 @@ function reconstructSpecial(unitID: Nullable<number>,
         const lLimit = data?.lLimit ?? [ ];
         for (let i=llbLevel-1; i>=0; --i) {
             if (!isNullish(lLimit[i]?.special)) {
-                result = lLimit[i].special!!;
+                result = lLimit[i].special!;
                 break;
             }
         }

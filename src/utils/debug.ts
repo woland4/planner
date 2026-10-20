@@ -20,6 +20,7 @@ if (IS_DEV) {
         (window as any).Units = Units;
         (window as any).Bulletizer = (await import('@/utils/bulletizer.ts')).Bulletizer;
         (window as any).Criteria = (await import('@/utils/criteria.ts')).Criteria;
+        (window as any).EngineNew = (await import('@/utils/engine.new.ts')).EngineNew;
 
         function extract(f: (id: any) => any): any {
             const result = [ ];

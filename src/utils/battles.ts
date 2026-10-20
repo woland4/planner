@@ -33,7 +33,7 @@ export const Battles = {
 
         return candidates.reduce((multiplier, candidate) => {
             if (candidate.pureMultiplier) return multiplier * candidate.pureMultiplier;
-            else return multiplier + candidate.additiveMultiplier!!;
+            else return multiplier + candidate.additiveMultiplier!;
         }, hasPure ? 1 : 0);
     },
 

@@ -18,7 +18,7 @@ export default {
     check(context): Nullable<GimmickCheckResult> {
 
         const matches = EngineNew.search(context, {
-            potential: /reduces hunger stack by (?<stacks>\d+) stack/i
+            potential: { effect: /reduces hunger stack by (?<stacks>\d+) stack/i }
         });
 
         let turnsHandled = 0;
@@ -29,7 +29,7 @@ export default {
             const stacks = Numbers.parseIntOr(match.groups.stacks, 99);
             turnsHandled += stacks;
 
-            const unit = context.team.units[match.index]!!;
+            const unit = context.team.units[match.index]!;
             details.push(`${ stacks } stack${ stacks === 1 ? '' : 's' } reduced by ${ Html.decorateUnit(unit.id, unit.variant) }'s potential ability`);
 
         });

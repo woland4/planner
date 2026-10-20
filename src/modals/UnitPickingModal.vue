@@ -208,7 +208,7 @@
                 label: 'Types',
                 children: [
                     [ 'STR', 'QCK', 'DEX', 'PSY', 'INT' ].map(t =>
-                        makeFilterItem(Html.optcIcon(Ui.getClassIcon(t)!!, 'relative top-1') + ' ' + t, [ 'type', t ]))
+                        makeFilterItem(Html.optcIcon(Ui.getClassIcon(t)!, 'relative top-1') + ' ' + t, [ 'type', t ]))
                 ]
             });
         }
@@ -219,7 +219,7 @@
                 label: 'Classes',
                 children: [
                     [ 'Fighter', 'Slasher', 'Striker', 'Shooter', 'Free Spirit', 'Cerebral', 'Powerhouse', 'Driven' ].map(c =>
-                        makeFilterItem(Html.optcIcon(Ui.getClassIcon(c)!!, 'relative top-1') + ' ' + c, [ 'class', c ]))
+                        makeFilterItem(Html.optcIcon(Ui.getClassIcon(c)!, 'relative top-1') + ' ' + c, [ 'class', c ]))
                 ]
             });
         }

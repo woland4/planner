@@ -110,7 +110,7 @@
         });
         const result = (await modal.result) as Nullable<{ id: number }>;
         if (isNumber(result?.id))
-            model.value.units[templateIndexToTeamIndex(templateIndex)]!!.support = result.id;
+            model.value.units[templateIndexToTeamIndex(templateIndex)]!.support = result.id;
     }
 
     function onDragStart(e: DragEvent, templateIndex: number) {
@@ -222,7 +222,7 @@
                                    :llb-level="getUnitLlbLevel(n)"
                                    :boost="Battles.getBoost(getUnitID(n), props.boosters)"
                                    :popover-side="n % 2 === 0 ? 'right' : 'left'"
-                                   :popover-data="{ ...popoverData[getUnitFullID(n)!!], hideCaptain: n !== 1 && n !== 2 }" />
+                                   :popover-data="{ ...popoverData[getUnitFullID(n)!], hideCaptain: n !== 1 && n !== 2 }" />
 
                     <UBadge v-if="Units.getLlbLevels(getUnitID(n))?.length"
                             class="absolute top-1 right-1 font-bold border border-red-800 hover:bg-red-300 cursor-pointer py-0.5 px-1 tracking-tighter select-none"
@@ -243,14 +243,14 @@
                  :class="{ empty: !hasSupport(n), filled: hasSupport(n) }"
                  class="support w-12.5 h-12.5 absolute -bottom-1.25 -right-1.25 rounded-[5px] flex flex-row justify-center items-center cursor-pointer text-white/30"
                  @click="onSupportClick(n)"
-                 @click.middle.prevent="model.units[templateIndexToTeamIndex(n)]!!.support = null">
+                 @click.middle.prevent="model.units[templateIndexToTeamIndex(n)]!.support = null">
 
                 <template v-if="!hasSupport(n)">
                     +
                 </template>
 
                 <UnitThumbnail v-else
-                               :unit-id="model.units[templateIndexToTeamIndex(n)]!!.support!!"
+                               :unit-id="model.units[templateIndexToTeamIndex(n)]!.support!"
                                :popover-side="n % 2 === 0 ? 'right' : 'left'"
                                :popover-data="{ support: true }" />
 

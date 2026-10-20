@@ -161,7 +161,7 @@ function isBoosted(team: Team,
                    captainIndex: number,
                    captainBullets: string[]): boolean {
 
-    const unit = team.units[unitIndex]!!;
+    const unit = team.units[unitIndex]!;
 
     for (let bullet of captainBullets) {
         const matches = [ ...bullet.matchAll(/Boosts\s+([A-Z,\s]+?)\s+of\s+(.+?)\s+by\s+[\d?]/gi) ];
@@ -207,7 +207,7 @@ function isGenericConditionalMet(team: Team,
     const requiredNumber = parseInt(number, 10);
     const availableNumber = (team.units ?? [ ])
         .filter(u => u?.id)
-        .reduce((p,n) => p + (criteria(n!!.id, n!!.variant) ? 1 : 0), 0);
+        .reduce((p,n) => p + (criteria(n!.id, n!.variant) ? 1 : 0), 0);
 
     return (availableNumber >= requiredNumber);
 

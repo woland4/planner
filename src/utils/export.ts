@@ -82,7 +82,7 @@ export const Export = {
         canvas.width = TEAM_CANVAS_WIDTH;
         canvas.height = height;
 
-        const context = canvas.getContext('2d')!!;
+        const context = canvas.getContext('2d')!;
 
         let y = PADDING;
 
@@ -144,7 +144,7 @@ export const Export = {
 
             drawText({
                 context,
-                text: `Boost: ${ boost!!.toFixed(2) }x`,
+                text: `Boost: ${ boost!.toFixed(2) }x`,
                 x: PADDING,
                 y: y,
                 w: TEAM_CANVAS_WIDTH - PADDING * 2,
@@ -155,7 +155,7 @@ export const Export = {
 
             drawText({
                 context,
-                text: `With friend: ${ (boost!! * 1.1).toFixed(2) }x`,
+                text: `With friend: ${ (boost! * 1.1).toFixed(2) }x`,
                 x: PADDING,
                 y: y + 10,
                 w: TEAM_CANVAS_WIDTH - PADDING * 2,
@@ -203,7 +203,7 @@ export const Export = {
         canvas.width = canvasWidth * PIXEL_RATIO;
         canvas.height = canvasHeight * PIXEL_RATIO;
 
-        const context = canvas.getContext('2d')!!;
+        const context = canvas.getContext('2d')!;
         context.scale(PIXEL_RATIO, PIXEL_RATIO);
         context.imageSmoothingQuality = 'high';
 
@@ -240,7 +240,7 @@ export const Export = {
                 // Group label
                 drawText({
                     context,
-                    text: labels[i]!!,
+                    text: labels[i]!,
                     x: PADDING + BOOSTER_BOX_PADDING,
                     y: contentY,
                     w: boxWidth - BOOSTER_BOX_PADDING * 2,
@@ -300,7 +300,7 @@ export const Export = {
             canvas.width = width * PIXEL_RATIO;
             canvas.height = height * PIXEL_RATIO;
 
-            const context = canvas.getContext('2d')!!;
+            const context = canvas.getContext('2d')!;
 
             for (let offset=0; offset<height; offset+=BATTLE_SLICE_HEIGHT) {
 
@@ -478,9 +478,9 @@ async function drawImage(o: DrawImageOptions) {
 
 function getBoosterLabel(booster: Booster): Nullable<string> {
     if (Numbers.isPositive(booster.pureMultiplier))
-        return `${ numberFormatter.format(booster.pureMultiplier!!) }x boost`;
+        return `${ numberFormatter.format(booster.pureMultiplier!) }x boost`;
     if (Numbers.isPositive(booster.additiveMultiplier))
-        return `${ numberFormatter.format(booster.additiveMultiplier!!) }x boost`;
+        return `${ numberFormatter.format(booster.additiveMultiplier!) }x boost`;
     return null;
 }
 

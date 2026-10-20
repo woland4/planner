@@ -22,7 +22,7 @@ export function checkGimmicks(battle: Nullable<Battle>,
         if (checker?.check) {
             result.push(checker.check({
                 gimmick,
-                battle: battle!!,
+                battle: battle!,
                 stageIndex,
                 team: team ?? { units: [ null, null, null, null, null, null ] }
             }));

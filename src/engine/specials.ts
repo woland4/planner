@@ -118,7 +118,7 @@ function checkSpecial(team: Team,
         const unboostedUnits = calculateUnboostedUnits(team, unitIndex, targets);
         for (let index of unboostedUnits) {
             if (!buffer.has(index)) buffer.set(index, [ buff ]);
-            else buffer.get(index)!!.push(buff);
+            else buffer.get(index)!.push(buff);
         }
     }
 
