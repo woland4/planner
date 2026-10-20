@@ -66,8 +66,7 @@ export type ParsedSupport = {
 
     trigger:
         | 'special' // When the supported character uses...
-        | 'debuff' // When an enemy inflicts you with...
-        | 'buff' // When the enemy gains...
+        | 'gimmick' // When an enemy inflicts you with... or When the enemy gains...
         | 'stage' // When you reach...
         | 'timing' // When the supported character hits...;
 
@@ -81,9 +80,7 @@ export type ParsedSupport = {
         | 5
         | 'last';
 
-    buffs?: GimmickType[]; // Only meaningful for buff triggers
-
-    debuffs?: GimmickType[]; // Only meaningful for debuff triggers
+    gimmicks?: GimmickType[]; // Only meaningful for gimmick triggers
 
     timing?: Timing; // Only meaningful for timing triggers
 
@@ -178,8 +175,8 @@ function parseDebuffSupport(support: string,
     const stripped = support.match(SEGMENT_REGEXES.whenPlayerDebuffed)![1].trim();
     const parsed = parseBuffOrDebuffSupport(stripped, INFLICTABLE_DEBUFFS);
     if (parsed) {
-        result.trigger = 'debuff';
-        result.debuffs = parsed.types;
+        result.trigger = 'gimmick';
+        result.gimmicks = parsed.types;
         result.effect = parsed.effect;
     }
 }
@@ -189,8 +186,8 @@ function parseBuffSupport(support: string,
     const stripped = support.match(SEGMENT_REGEXES.whenEnemyBuffed)![1].trim();
     const parsed = parseBuffOrDebuffSupport(stripped, INFLICTABLE_BUFFS);
     if (parsed) {
-        result.trigger = 'buff';
-        result.buffs = parsed.types;
+        result.trigger = 'gimmick';
+        result.gimmicks = parsed.types;
         result.effect = parsed.effect;
     }
 }
