@@ -7,7 +7,7 @@ import { isEmptyish, omit } from 'remeda';
   -------------*/
 
 const IGNORABLE_SUPPORT_EFFECTS = [
-    /reduces damage received from [^.]+ by [\d.]%\./i,
+    /reduces damage received from [^.]+ by [\d.]+%\./i,
     /adds [\d.]+% of this character's base [a-z\s,]+ to the supported character's base [a-z\s,]+\./i,
 ];
 
@@ -100,7 +100,7 @@ export const Supports = {
 
         let result = support;
         for (let regex of IGNORABLE_SUPPORT_EFFECTS)
-            support = support.replace(regex, '');
+            result = result.replace(regex, '');
         result = result.trim();
 
         return result.length ? result : null;
@@ -197,7 +197,7 @@ function parseStageSupport(support: string,
 
     let remaining = support
         .match(SEGMENT_REGEXES.whenStageReached)![1].trim()
-        .replace(/^the\s*/i, '')
+        .replace(/^the\s+/i, '')
         .trim();
 
     if (remaining.startsWith('1st stage'))
@@ -225,7 +225,7 @@ function parseTimingSupport(support: string,
 
     let remaining = support
         .match(SEGMENT_REGEXES.whenTimingHit)![1].trim()
-        .replace(/^a\s*/i, '')
+        .replace(/^an?\s+/i, '')
         .trim();
 
     if (remaining.startsWith('perfect'))
@@ -274,7 +274,9 @@ function parseBuffOrDebuffSupport(data: string,
             break;
 
         // Match the text to the beginning of the buffer (this is basically a lookahead)
-        matches = matches.filter(d => remaining.startsWith(d.text));
+        matches = matches
+            .filter(d => remaining.startsWith(d.text))
+            .sort((a, b) => b.text.length - a.text.length);
 
         // If the lookahead failed (eg. we've matched "orb" but the next token was "explosion")
         // we consider it a parse failure and abort
