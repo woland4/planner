@@ -4,9 +4,10 @@ import { type GimmickDetails, GimmickRegistry } from '@/utils/registry.ts';
 import { Numbers } from '@/utils/numbers.ts';
 import { Enums } from '@/utils/enums.ts';
 
-import type { Gimmick, GimmickEffectType } from '@/types/gimmicks.ts';
-import type { Nullable } from '@/types/utils.ts';
+import type { Gimmick } from '@/types/gimmicks.ts';
 import type { GimmickIssues } from '@/types/validation.ts';
+import type { GimmickType } from '@/types/enums.ts';
+import type { Nullable } from '@/types/utils.ts';
 
 const allTargets = [
     ...Enums.types,
@@ -21,7 +22,7 @@ const allTargets = [
 
 export const Gimmicks = {
 
-    getGimmickDetails(type: Nullable<GimmickEffectType>) {
+    getGimmickDetails(type: Nullable<GimmickType>) {
         return type ? GimmickRegistry[type] as unknown as GimmickDetails<any> : null;
     },
 

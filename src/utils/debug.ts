@@ -21,6 +21,7 @@ if (IS_DEV) {
         (window as any).Bulletizer = (await import('@/utils/bulletizer.ts')).Bulletizer;
         (window as any).Criteria = (await import('@/utils/criteria.ts')).Criteria;
         (window as any).EngineNew = (await import('@/utils/engine.new.ts')).EngineNew;
+        (window as any).Supports = (await import('@/utils/supports.ts')).Supports;
 
         function extract(f: (id: any) => any): any {
             const result = [ ];

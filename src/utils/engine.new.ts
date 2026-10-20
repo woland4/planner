@@ -1,67 +1,40 @@
 import { isNullish, isString } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
+import { GimmickRegistry } from '@/utils/registry.ts';
 
 import type { Nullable } from '@/types/utils.ts';
 import type { GimmickType } from '@/types/enums.ts';
-import type { GimmickCheckContext } from '@/types/engine.ts';
-import type { GimmickEffectType } from '@/types/gimmicks.ts';
-import { GimmickRegistry } from '@/utils/registry.ts';
+import type { GimmickCheckContext, SearchParams, SearchParamsCondition, SearchParamsField, SearchResult, SearchResultCandidate } from '@/types/engine.ts';
 
-/*-----
-  Types
-  -----*/
+/*-------------
+  Configuration
+  -------------*/
 
-export type SearchParams = {
-    captain?: SearchParamsField;
-    potential?: SearchParamsField;
-    sailor?: SearchParamsField;
-    special?: SearchParamsField;
-    superSpecial?: SearchParamsField;
-    support?: SearchParamsField;
-    swap?: SearchParamsField;
-};
+const INFLICTABLE_DEBUFFS = [
+    'atk down',
+    'bind',
+    'blindness',
+    'chain coefficient reduction',
+    'chain multiplier limit',
+    'despair',
+    'increase damage taken',
+    'orb manipulation',
+    'orb randomization',
+    'paralysis',
+    'poison',
+    'special bind',
+    'special rewind',
+    'strong poison',
+    'toxic',
+];
 
-export type SearchParamsField = {
-    effect: RegExp;
-    conditions?: SearchParamsCondition[];
-};
+function normalizeSupport(support: string): string {
+    return support
+        .replace(/if inflicted with (.+?) status from the enemy/gi, 'when the an enemy inflicts you with $1')
+        .replace(/when the an enemy inflicts you with an? /gi, 'when the an enemy inflicts you with')
 
-export type SearchParamsCondition = {
-    regex: string;
-    resolve?: (context: GimmickCheckContext<any>, match: SearchResult) => SearchResultConfidence;
 }
-
-export type SearchResult = {
-
-    source:
-        | 'captain'
-        | 'potential'
-        | 'sailor'
-        | 'special'
-        | 'super special'
-        | 'super switch'
-        | 'support'
-        | 'switch';
-    conditional?: boolean;
-
-    index: number;
-    text: string;
-    matches: string[];
-    groups: Record<string, Nullable<string>>;
-
-};
-
-export type SearchResultCandidate = {
-    source: SearchResult['source'];
-    index: number;
-    text: string;
-}
-
-export type SearchResultConfidence =
-    | 'certain' // *WILL* trigger
-    | 'conditional' // *MAY* trigger depending on the player
-    | 'none'; // *WILL NOT* trigger
 
 /*-------
   Exports
@@ -75,8 +48,6 @@ export const EngineNew = {
 
     search(context: GimmickCheckContext<any>,
            params: SearchParams): SearchResult[] {
-
-        window.context = context;
 
         const result: Nullable<SearchResult>[] = [ ];
 
@@ -267,7 +238,6 @@ function matchCandidate(context: GimmickCheckContext<any>,
 
         const matches = candidate.text.match(generateCandidateRegex(condition, field.effect));
         if (!matches) continue;
-        console.log(matches);
 
         const result: SearchResult = { ...candidate, matches: [ ...matches ], groups: matches.groups ?? { } };
 
@@ -298,7 +268,7 @@ function generateCandidateRegex(condition: SearchParamsCondition,
 const TRIGGER_SEPARATOR_REGEX = /\s*,\s*|\s+(?:and|or)\s+/i;
 const TRIGGER_NOISE_REGEX = /^(?:a|an|the)\s+|\s+(?:debuffs?|effects?)$/gi;
 
-function toGimmickTypes(trigger: Nullable<string>): GimmickEffectType[] {
+function toGimmickTypes(trigger: Nullable<string>): GimmickType[] {
     if (!trigger) return [ ];
     return trigger
         .split(TRIGGER_SEPARATOR_REGEX)
@@ -312,21 +282,21 @@ function normalizeString(value: string): string {
     return value.trim().toLowerCase().replace(/\s+/g, ' ');
 }
 
-let typesByLabel: Nullable<Map<string, GimmickEffectType>> = null;
+let typesByLabel: Nullable<Map<string, GimmickType>> = null;
 
-function getTypesByLabel(): Map<string, GimmickEffectType> {
+function getTypesByLabel(): Map<string, GimmickType> {
     if (!typesByLabel) {
         typesByLabel = new Map();
         for (const [ type, details ] of Object.entries(GimmickRegistry)) {
             if (isString(details.label))
-                typesByLabel.set(normalizeString(details.label), type as GimmickEffectType);
-            for (const alias of TRIGGER_ALIASES[type as GimmickEffectType] ?? [ ])
-                typesByLabel.set(normalizeString(alias), type as GimmickEffectType);
+                typesByLabel.set(normalizeString(details.label), type as GimmickType);
+            for (const alias of TRIGGER_ALIASES[type as GimmickType] ?? [ ])
+                typesByLabel.set(normalizeString(alias), type as GimmickType);
         }
     }
     return typesByLabel;
 }
 
-const TRIGGER_ALIASES: Partial<Record<GimmickEffectType, string[]>> = {
+const TRIGGER_ALIASES: Partial<Record<GimmickType, string[]>> = {
     specialBind: [ 'special bind' ]
 }

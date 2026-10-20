@@ -1,19 +1,11 @@
 import { isArray, isNullish, isNumber, isPlainObject, isString, unique } from 'remeda';
 
-import { Criteria } from '@/utils/criteria.ts';
 import { Database } from '@/utils/database.ts';
+import { Criteria } from '@/utils/criteria.ts';
+import { Supports } from '@/utils/supports.ts';
 
 import type { Nullable } from '@/types/utils.ts';
 import type { Class, Type } from '@/types/enums.ts';
-
-/*---------
-  Constants
-  ---------*/
-
-const IGNORED_SUPPORT_REGEXES = [
-    /reduces damage received from [^.]+ by [\d.]%\./i,
-    /adds [\d.]+% of this character's base [a-z\s,]+ to the supported character's base [a-z\s,]+\./i,
-];
 
 /*-----
   Types
@@ -579,11 +571,8 @@ function getSupporterIDs(): number[] {
         supporterIDs = Object.keys(window.details ?? { })
             .filter(id => /^\d+$/.test(id))
             .filter(id => {
-                let support = reconstructSupport(parseInt(id, 10))?.description;
-                if (!support) return false;
-                for (let regex of IGNORED_SUPPORT_REGEXES)
-                    support = support.replace(regex, '');
-                return support?.trim()?.length > 0;
+                const support = reconstructSupport(parseInt(id, 10))?.description;
+                return !!Supports.removeUselessShit(support)?.length;
             })
             .map(id => parseInt(id, 10));
     }

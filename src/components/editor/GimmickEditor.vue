@@ -10,8 +10,8 @@
     import { Enums } from '@/utils/enums.js';
     import { I18N } from '@/utils/i18n.ts';
 
-    import type { Gimmick, GimmickEffectType } from '@/types/gimmicks.ts';
-    import type { Position } from '@/types/enums.ts';
+    import type { Gimmick } from '@/types/gimmicks.ts';
+    import type { GimmickType, Position } from '@/types/enums.ts';
     import type { GimmickIssues } from '@/types/validation.ts';
     import type { Nullable } from '@/types/utils.ts';
 
@@ -33,7 +33,7 @@
 
     const INTERRUPTION_ITEMS = Enums.interruptions.map(value => ({ value, label: I18N.interruption(value) }));
 
-    const TYPE_OPTIONS = sortBy<GimmickEffectType[]>(Enums.gimmickTypes, (t) => getTypeLabel(t));
+    const TYPE_OPTIONS = sortBy<GimmickType[]>(Enums.gimmickTypes, (t) => getTypeLabel(t));
 
     /*-------
       Options
@@ -77,7 +77,7 @@
       Methods
       -------*/
 
-    function getTypeLabel(type: GimmickEffectType): string {
+    function getTypeLabel(type: GimmickType): string {
         const label = GimmickRegistry[type]?.label;
         if (isFunction(label)) return label({ } as any);
         else return label;
