@@ -41,7 +41,7 @@ const INFLICTABLE_DEBUFFS: { text: string, gimmick: GimmickType }[] = [
 ];
 
 const INFLICTABLE_BUFFS: { text: string, gimmick: GimmickType }[] = [
-    { text: 'atk up', gimmick: 'attackUp' }, // TODO enemy attack up
+    { text: 'atk up', gimmick: 'attackUpEnemy' },
     { text: 'enrage', gimmick: 'provoked' },
     { text: 'increased defense', gimmick: 'defenseUp' },
     { text: 'percent damage reduction', gimmick: 'damageReduction' },

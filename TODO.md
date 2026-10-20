@@ -16,6 +16,7 @@
   - [ ] attackDown
   - [ ] attackDownAboveChain
   - [ ] attackDownBelowChain
+  - [ ] attackUpEnemy
   - [ ] bind
   - [ ] bleed
   - [ ] blindness
@@ -69,7 +70,7 @@
   - [ ] unfavorableSlots
   - [x] vsReduction
 - Gimmicks?:
-  - [ ] attackUp
+  - [ ] attackUpPlayer
   - [ ] beneficialEffectRemoval
   - [ ] nao
   - [ ] slotUp

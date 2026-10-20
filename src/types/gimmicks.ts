@@ -16,7 +16,7 @@ export type GimmickEffect =
     | { type: 'attackDown', reduction?: number }
     | { type: 'attackDownAboveChain', chain: number, reduction?: number }
     | { type: 'attackDownBelowChain', chain: number, reduction?: number }
-    | { type: 'attackUp', multiplier?: number }
+    | { type: 'attackUpPlayer', multiplier: number }
     | { type: 'bind', targets: GimmickTarget[] }
     | { type: 'bleed', fixed?: number, percentage?: number }
     | { type: 'blindness' }
@@ -57,6 +57,7 @@ export type GimmickEffect =
     | { type: 'unfavorableSlots', slots: Slot[] }
     | { type: 'vsReduction', targets: GimmickTarget[] }
     // Enemy
+    | { type: 'attackUpEnemy', multiplier?: number }
     | { type: 'damage', amount?: number, percentage?: number }
     | { type: 'damageLimit', amount?: number }
     | { type: 'damageNullification' }

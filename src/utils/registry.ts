@@ -48,9 +48,22 @@ export const GimmickRegistry: GimmickRegistry = {
 
     },
 
-    attackUp: {
+    attackUpEnemy: {
 
-        label: 'Attack up',
+        icon: 'attackUp',
+        label: 'Attack up (enemy)',
+        details: g => [ multiplier(g.multiplier) ],
+
+        fields: {
+            multiplier: { type: 'multiplier', label: 'Multiplier' }
+        }
+
+    },
+
+    attackUpPlayer: {
+
+        icon: 'attackUp',
+        label: 'Attack up (player)',
         details: g => [ multiplier(g.multiplier) ],
 
         fields: {
