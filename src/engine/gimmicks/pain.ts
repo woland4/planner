@@ -4,7 +4,6 @@ import { Html } from '@/utils/html.ts';
 
 import type { GimmickChecker, GimmickCheckResult } from '@/types/engine.ts';
 import type { Nullable } from '@/types/utils.ts';
-import { Engine } from '@/utils/engine.ts';
 
 /**
  * Sources of resolution:
@@ -21,11 +20,6 @@ const EXTRACTION_REGEX = new RegExp([
     EngineNew.Effects.removesDuration('pain'),
 ].join('|'), 'i');
 
-const SUPPORT_REGEX = new RegExp([
-    `${ EngineNew.Effects.reducesDuration('pain') }`,
-    `${ EngineNew.Conditions.whenInflictedWith('pain') }.*?${ EngineNew.Effects.removesDuration('pain') }`
-].join('|'), 'i');
-
 /*-------
   Exports
   -------*/
@@ -37,19 +31,13 @@ export default {
     check(context): Nullable<GimmickCheckResult> {
 
         const matches = EngineNew.search(context, {
-
-            special: { effect: EXTRACTION_REGEX },
-            superSpecial: { effect: EXTRACTION_REGEX },
-            swap: { effect: EXTRACTION_REGEX },
-
-            support: {
-                effect: SUPPORT_REGEX,
-                conditions: [ EngineNew.Conditions.whenInflictedWith(), EngineNew.Conditions.whenSpecialUsed(), EngineNew.Conditions.whenStageReached() ]
-            }
-
+            captain: EXTRACTION_REGEX,
+            special: EXTRACTION_REGEX,
+            superSpecial: EXTRACTION_REGEX,
+            swap: EXTRACTION_REGEX,
+            support: EXTRACTION_REGEX,
+            sailor: EXTRACTION_REGEX
         });
-
-        console.log(matches);
 
         const result: { index: number, source: string, turns: number }[] = [ ];
         matches.forEach(match => {

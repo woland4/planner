@@ -18,7 +18,7 @@ export default {
     check(context): Nullable<GimmickCheckResult> {
 
         const matches = EngineNew.search(context, {
-            potential: { effect: /reduces hunger stack by (?<stacks>\d+) stack/i }
+            potential: /reduces hunger stack by (?<stacks>\d+) stack/i
         });
 
         let turnsHandled = 0;

@@ -1,40 +1,58 @@
 import { isNullish, isString } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
-import { GimmickRegistry } from '@/utils/registry.ts';
 
 import type { Nullable } from '@/types/utils.ts';
 import type { GimmickType } from '@/types/enums.ts';
-import type { GimmickCheckContext, SearchParams, SearchParamsCondition, SearchParamsField, SearchResult, SearchResultCandidate } from '@/types/engine.ts';
+import type { GimmickCheckContext } from '@/types/engine.ts';
+import { type ParsedSupport, Supports } from '@/utils/supports.ts';
 
-/*-------------
-  Configuration
-  -------------*/
+/*-----
+  Types
+  -----*/
 
-const INFLICTABLE_DEBUFFS = [
-    'atk down',
-    'bind',
-    'blindness',
-    'chain coefficient reduction',
-    'chain multiplier limit',
-    'despair',
-    'increase damage taken',
-    'orb manipulation',
-    'orb randomization',
-    'paralysis',
-    'poison',
-    'special bind',
-    'special rewind',
-    'strong poison',
-    'toxic',
-];
+export type SearchParams = {
+    captain?: RegExp;
+    potential?: RegExp;
+    sailor?: RegExp;
+    special?: RegExp;
+    superSpecial?: RegExp;
+    support?: RegExp;
+    swap?: RegExp;
+};
 
-function normalizeSupport(support: string): string {
-    return support
-        .replace(/if inflicted with (.+?) status from the enemy/gi, 'when the an enemy inflicts you with $1')
-        .replace(/when the an enemy inflicts you with an? /gi, 'when the an enemy inflicts you with')
+export type SearchResult = {
 
-}
+    source:
+        | 'captain'
+        | 'potential'
+        | 'sailor'
+        | 'special'
+        | 'super special'
+        | 'super switch'
+        | 'support'
+        | 'switch';
+
+    conditional?: boolean;
+
+    index: number;
+    text: string;
+    matches: string[];
+    groups: Record<string, Nullable<string>>;
+
+};
+
+type SearchResultCandidate = {
+    source: SearchResult['source'];
+    index: number;
+    text: string;
+    trigger?: Nullable<ParsedSupport>; // only meaningful for supports
+};
+
+type SearchResultConfidence =
+    | 'certain' // *WILL* trigger
+    | 'conditional' // *MAY* trigger depending on the player
+    | 'none'; // *WILL NOT* trigger
 
 /*-------
   Exports
@@ -70,49 +88,9 @@ export const EngineNew = {
 
     },
 
-    /*--------------
-      Misc Utilities
-      --------------*/
-
-    Conditions: {
-
-        always(): SearchParamsCondition {
-            return {
-                regex: ''
-            };
-        },
-
-        whenInflictedWith(suffix: string = 'reduces|removes'): SearchParamsCondition {
-            return {
-                regex: `when an enemy inflicts you with (?<trigger>(?:(?!${ suffix })[^.])+)`,
-                resolve(context, match) {
-                    const triggers = toGimmickTypes(match.groups.trigger);
-                    if (!triggers.length) return isExhausted(context, context.gimmick.type) ? 'none' : 'certain';
-                    return triggers.some(t => isExhausted(context, t)) ? 'none' : 'certain';
-                }
-            };
-        },
-
-        whenSpecialUsed(): SearchParamsCondition {
-            return {
-                regex: 'when the supported character uses',
-                resolve: () => 'conditional'
-            };
-        },
-
-        whenStageReached(): SearchParamsCondition {
-            return {
-                regex: `when you reach the (?<stage>\\d+|final|last)(?:st|nd|rd|th)? stage`,
-                resolve(context, match) {
-                    const stage = match.groups.stage!;
-                    if (stage === 'final' || stage === 'last')
-                        return context.stageIndex === context.battle.stages.length - 1 ? 'certain' : 'none';
-                    return context.stageIndex === parseInt(stage, 10) - 1 ? 'certain' : 'none';
-                }
-            };
-        }
-
-    },
+    /*---------------
+      Regex Utilities
+      ---------------*/
 
     Effects: {
 
@@ -203,7 +181,7 @@ function extractSupports(context: GimmickCheckContext<any>): SearchResultCandida
         const unit = context.team.units[i];
         const support = Units.getSupport(unit?.support);
         if (support?.description)
-            result.push({ source: 'support', index: i, text: support.description });
+            result.push({ source: 'support', index: i, text: support.description, trigger: Supports.parseSupport(support.description) });
     }
     return result;
 }
@@ -221,82 +199,64 @@ function extractSwaps(context: GimmickCheckContext<any>): SearchResultCandidate[
     return result;
 }
 
-function isExhausted(context: GimmickCheckContext<any>,
-                     type: GimmickType): boolean {
-    return context.battle.stages
-        .slice(0, context.stageIndex)
-        .some(stage => stage?.gimmicks?.some(g => g.type === type));
-}
-
 function matchCandidate(context: GimmickCheckContext<any>,
-                        field: SearchParamsField,
+                        effect: RegExp,
                         candidate: SearchResultCandidate): Nullable<SearchResult> {
 
-    let best: Nullable<SearchResult> = null;
+    const matches = (candidate.trigger?.effect ?? candidate.text).match(effect);
+    if (!matches) return null;
 
-    for (const condition of field.conditions ?? [ EngineNew.Conditions.always() ]) {
+    const availability = candidate.trigger ? resolveAvailability(context, candidate.trigger) : 'certain';
+    if (availability === 'none') return null;
 
-        const matches = candidate.text.match(generateCandidateRegex(condition, field.effect));
-        if (!matches) continue;
+    return {
+        ...candidate,
+        matches: [ ...matches ],
+        groups: matches.groups ?? { },
+        conditional: availability === 'conditional'
+    };
 
-        const result: SearchResult = { ...candidate, matches: [ ...matches ], groups: matches.groups ?? { } };
+}
 
-        let confidence = condition.resolve?.(context, result) ?? 'certain';
-        if (confidence !== 'none' && /once per adventure/i.test(candidate.text) && isExhausted(context, context.gimmick.type))
-            confidence = 'none';
+function resolveAvailability(context: GimmickCheckContext<any>,
+                             trigger: ParsedSupport): SearchResultConfidence {
 
-        if (confidence === 'certain')
-            return { ...result, conditional: false };
-        else if (confidence === 'none')
-            continue;
-        else if (!best)
-            best = { ...result, conditional: true };
+    switch (trigger.trigger) {
+
+        case 'gimmick':
+            if (trigger.once && trigger.gimmicks!.some(g => gimmickProcsBefore(context, g))) return 'none';
+            return trigger.gimmicks!.some(g => gimmickProcsOn(context, g)) ? 'certain' : 'none';
+
+        case 'stage':
+            return procsOnStage(context, trigger.stage!) ? 'certain' : 'none';
+
+        case 'special':
+        case 'timing':
+            return 'conditional';
 
     }
 
-    return best;
-
 }
 
-function generateCandidateRegex(condition: SearchParamsCondition,
-                                effect: RegExp): RegExp {
-    if (!condition.regex)
-        return effect;
-    return new RegExp(`(?:${ condition.regex })[^.]*?(?:${ effect.source })`, effect.flags.replace('g', ''));
+function gimmickProcsOn(context: GimmickCheckContext<any>,
+                        gimmickType: GimmickType): boolean {
+    return context.battle.stages[context.stageIndex]
+        ?.gimmicks
+        ?.some(g => g.type === gimmickType)
+        ?? false;
 }
 
-const TRIGGER_SEPARATOR_REGEX = /\s*,\s*|\s+(?:and|or)\s+/i;
-const TRIGGER_NOISE_REGEX = /^(?:a|an|the)\s+|\s+(?:debuffs?|effects?)$/gi;
-
-function toGimmickTypes(trigger: Nullable<string>): GimmickType[] {
-    if (!trigger) return [ ];
-    return trigger
-        .split(TRIGGER_SEPARATOR_REGEX)
-        .map(token => normalizeString(token.replace(TRIGGER_NOISE_REGEX, '')))
-        .filter(token => token.length > 0)
-        .map(token => getTypesByLabel().get(token))
-        .filter(type => !isNullish(type));
+function gimmickProcsBefore(context: GimmickCheckContext<any>,
+                            gimmickType: GimmickType): boolean {
+    return context.battle.stages
+        .slice(0, context.stageIndex)
+        .some(s => s.gimmicks?.some(g => g.type === gimmickType));
 }
 
-function normalizeString(value: string): string {
-    return value.trim().toLowerCase().replace(/\s+/g, ' ');
-}
-
-let typesByLabel: Nullable<Map<string, GimmickType>> = null;
-
-function getTypesByLabel(): Map<string, GimmickType> {
-    if (!typesByLabel) {
-        typesByLabel = new Map();
-        for (const [ type, details ] of Object.entries(GimmickRegistry)) {
-            if (isString(details.label))
-                typesByLabel.set(normalizeString(details.label), type as GimmickType);
-            for (const alias of TRIGGER_ALIASES[type as GimmickType] ?? [ ])
-                typesByLabel.set(normalizeString(alias), type as GimmickType);
-        }
-    }
-    return typesByLabel;
-}
-
-const TRIGGER_ALIASES: Partial<Record<GimmickType, string[]>> = {
-    specialBind: [ 'special bind' ]
+function procsOnStage(context: GimmickCheckContext<any>,
+                      targetStage: 1 | 2 | 3 | 4 | 5 | 'last') {
+    if (!isString(targetStage))
+        return context.stageIndex + 1 === targetStage;
+    else
+        return context.stageIndex === context.battle.stages.length - 1;
 }

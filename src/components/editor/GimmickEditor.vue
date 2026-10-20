@@ -423,7 +423,7 @@
     </div>
 
     <ul v-if="props.validation?.length"
-        class="list-disc pl-4">
+        class="list-disc pl-4 -mt-1 mb-2">
         <li v-for="(v,n) in props.validation"
             :key="n"
             class="text-error text-[12px]">
