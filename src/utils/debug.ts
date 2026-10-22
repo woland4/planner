@@ -46,9 +46,9 @@ if (IS_DEV) {
 
         (window as any).extractSailors = function(regex: RegExp): any {
             return [
-                ...extract(id => Units.getSailors(id, 0)).flat(),
-                ...extract(id => Units.getSpecial(id, 1)).flat(),
-                ...extract(id => Units.getSpecial(id, 2)).flat()
+                ...extract(id => Units.getSailors(id, 0, 5)).flat(),
+                ...extract(id => Units.getSailors(id, 1, 5)).flat(),
+                ...extract(id => Units.getSailors(id, 2, 5)).flat()
             ]
                 .filter(x => regex.test(x))
                 .filter((x,n,a) => a.indexOf(x) === n);

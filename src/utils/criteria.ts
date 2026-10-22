@@ -53,6 +53,11 @@ const COST_PATTERNS: CostPattern[] = [
     }
 ];
 
+const FIXES: { regex: RegExp, replacement: string }[] = [
+    { regex: /Dr\. (Kureha)/i, replacement: '$1' },
+    { regex: /Dr\. (Hiriluk)/i, replacement: '$1' }
+]
+
 /*-----
   Types
   -----*/
@@ -86,7 +91,12 @@ export const Criteria = {
             return result;
         }
 
-        const sanitized = criteria.replace(ALIASES_REGEX, '').replace(COST_FIX_REGEX, 'cost');
+        let sanitized = criteria
+            .replace(ALIASES_REGEX, '')
+            .replace(COST_FIX_REGEX, 'cost');
+        for (let fix of FIXES)
+            sanitized = sanitized.replace(fix.regex, fix.replacement);
+
         const cost = parseCostCriteria(sanitized);
 
         if (ALL_CHARACTERS_REGEX.test(sanitized)) {

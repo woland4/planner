@@ -107,8 +107,9 @@ export const Units = {
     },
 
     getSailors(unitID: Nullable<number>,
-               variant: Nullable<number> = null): string[] {
-        return reconstructSailors(unitID, variant);
+               variant: Nullable<number> = null,
+               llbLevel: number = 0): string[] {
+        return reconstructSailors(unitID, variant, llbLevel);
     },
 
     getSuperSpecial(unitID: Nullable<number>,
@@ -254,7 +255,7 @@ function reconstructUnit(unitID: Nullable<number>,
 
         swap: reconstructSwap(unitID),
 
-        sailors: reconstructSailors(unitID, variant),
+        sailors: reconstructSailors(unitID, variant, llbLevel),
 
         potentials: reconstructPotentials(unitID),
 
