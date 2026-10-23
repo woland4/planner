@@ -10,7 +10,7 @@ import type { Nullable } from '@/types/utils.ts';
   Constants
   ---------*/
 
-const MATCHERS: { support: RegExp, special: RegExp }[] = [
+const MATCHERS: { support: RegExp; special: RegExp }[] = [
 
     { support: /when the supported character uses[^.]*base atk boost[^.]*special/i, special: /boosts[^.]*base atk[^.]*of/i },
     { support: /when the supported character uses[^.]*(atk boost|atk amplification|atk up)[^.]*special/i, special: /boosts((?!base atk)[^.])*atk(?! against)[^.]*of/i },
@@ -48,7 +48,7 @@ const MATCHERS: { support: RegExp, special: RegExp }[] = [
     { support: /when the supported character uses[^.]*damage reducing[^.]*special/i, special: /reduces damage received/i },
 
     { support: /when the supported character uses[^.]*delay[^.]*special/i, special: /delays( all)? enemies/i },
-    { support: /when the supported character uses[^.]*healing[^.]*special/i, special: /recovers \d/i },
+    { support: /when the supported character uses[^.]*healing[^.]*special/i, special: /recovers \d/i }
 
 ];
 

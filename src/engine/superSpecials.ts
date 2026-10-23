@@ -81,7 +81,7 @@ type ClauseResult = 'met' | 'unmet' | 'unknown';
 const KNOWN_BULLETS = [
     /must be captain/i,
     /can be launched/i,
-    /crew must consist/i,
+    /crew must consist/i
 ];
 
 const ALWAYS_TRUE_CONDITIONS = [
@@ -95,7 +95,7 @@ const ALWAYS_TRUE_CONDITIONS = [
 
 export function checkSuperSpecialIssues(team: Nullable<Team>): TeamCompositionIssue[] {
     if (!team?.units?.length) return [ ];
-    return [ 5, 0, 4, 1, 3, 2]
+    return [ 5, 0, 4, 1, 3, 2 ]
         .map(index => checkSuperSpecial(index, team))
         .filter(i => !isNullish(i));
 }
@@ -116,7 +116,7 @@ function checkSuperSpecial(unitIndex: number,
     const isCaptain = unitIndex === 0 || unitIndex === 5;
 
     let sanitizedCondition = condition;
-    for (let regex of ALWAYS_TRUE_CONDITIONS)
+    for (const regex of ALWAYS_TRUE_CONDITIONS)
         sanitizedCondition = sanitizedCondition.replace(regex, '');
 
     const bullets = Bulletizer.split(sanitizedCondition);
@@ -133,7 +133,7 @@ function checkSuperSpecial(unitIndex: number,
             result = combineClauseResults(result, 'and', 'unknown');
         else {
             let subResult = checkSingleClause(clauses[0], team);
-            for (let i=1; i<clauses.length-1; i+=2) {
+            for (let i = 1; i < clauses.length - 1; i += 2) {
                 const next = checkSingleClause(clauses[i + 1], team);
                 subResult = combineClauseResults(subResult, clauses[i].toLowerCase(), next);
             }
@@ -174,7 +174,7 @@ function checkSingleClause(clause: string,
     if (!requirements) return 'unknown';
 
     const criteria = Criteria.parseCriteria(requirements);
-    const unitsMatchingCriteria = team.units.reduce((p,n) => {
+    const unitsMatchingCriteria = team.units.reduce((p, n) => {
         if (!n?.id || !criteria(n.id, n.variant)) return p;
         else return p + 1;
     }, 0);

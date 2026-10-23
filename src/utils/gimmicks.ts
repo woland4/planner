@@ -1,20 +1,33 @@
-import { intersection, isFunction, isNullish, isString, keys, values } from 'remeda';
+import { intersection, isArray, isBoolean, isFunction, isNullish, isString, keys, values } from 'remeda';
 
-import { type GimmickDetails, GimmickRegistry } from '@/utils/registry.ts';
+import {
+    GimmickRegistry,
+    type GimmickSpecs,
+    type GimmickWriteDetailsField,
+    type GimmickWriteDetailsSpecType
+} from '@/utils/registry.ts';
 import { Numbers } from '@/utils/numbers.ts';
 import { Enums } from '@/utils/enums.ts';
 
-import type { Gimmick } from '@/types/gimmicks.ts';
+import type { Gimmick, GimmickEffectType } from '@/types/gimmicks.ts';
 import type { GimmickIssues } from '@/types/validation.ts';
-import type { GimmickType } from '@/types/enums.ts';
 import type { Nullable } from '@/types/utils.ts';
+import type { GimmickType } from '@/types/enums.ts';
 
-const allTargets = [
+const ALL_TARGETS = [
     ...Enums.types,
     ...Enums.classes,
     ...Enums.positions,
     ...values(Enums.tags).flat()
 ];
+
+const DYNAMIC_REGISTRY = GimmickRegistry as unknown as Record<GimmickType, { fields?: AnyGimmickFields }>;
+
+/*-----
+  Types
+  -----*/
+
+type AnyGimmickFields = Record<string, GimmickWriteDetailsField<Partial<Gimmick>>>;
 
 /*-------
   Exports
@@ -22,24 +35,52 @@ const allTargets = [
 
 export const Gimmicks = {
 
-    getGimmickDetails(type: Nullable<GimmickType>) {
-        return type ? GimmickRegistry[type] as unknown as GimmickDetails<any> : null;
+    getGimmickData<T extends GimmickEffectType>(type: T): GimmickRegistry[T] {
+        return GimmickRegistry[type];
     },
 
-    getGimmickLabel(gimmick: Nullable<Gimmick>): Nullable<string> {
-        const details = Gimmicks.getGimmickDetails(gimmick?.type);
-        if (!details) return null;
-        else if (isString(details.label)) return details.label;
-        else if (isFunction(details.label)) return details.label(gimmick);
-        else return null;
+    getGimmickLabel<T extends GimmickEffectType>(gimmick: Nullable<GimmickSpecs<T>>): Nullable<string> {
+        if (!gimmick) return null;
+        const data = Gimmicks.getGimmickData(gimmick.type);
+        if (isString(data.label)) return data.label;
+        if (isFunction(data.label)) return data.label(gimmick);
+        return null;
     },
 
-    getGimmickIcon(gimmick: Nullable<Gimmick>): Nullable<string> {
-        const details = Gimmicks.getGimmickDetails(gimmick?.type);
-        if (!details) return null;
-        else if (isString(details.icon)) return details.icon;
-        else if (isFunction(details.icon)) return details.icon(gimmick);
-        else return gimmick!!.type;
+    getGimmickIcon<T extends GimmickEffectType>(gimmick: Nullable<GimmickSpecs<T>>): Nullable<string> {
+        if (!gimmick) return null;
+        const data = Gimmicks.getGimmickData(gimmick.type);
+        if (isString(data.icon)) return data.icon;
+        if (isFunction(data.icon)) return data.icon(gimmick);
+        return null;
+    },
+
+    getGimmickDetails<T extends GimmickEffectType>(gimmick: Nullable<GimmickSpecs<T>>): Nullable<string[]> {
+        if (!gimmick) return null;
+        const data = Gimmicks.getGimmickData(gimmick.type);
+        if (isFunction(data.details)) return data.details(gimmick).filter(s => !isNullish(s));
+        return null;
+    },
+
+    getGimmickLines<T extends GimmickEffectType>(gimmick: Nullable<GimmickSpecs<T>>): Nullable<string[]> {
+        if (!gimmick) return null;
+        const data = Gimmicks.getGimmickData(gimmick.type);
+        if (isFunction(data.lines)) return data.lines(gimmick).filter(s => !isNullish(s));
+        return null;
+    },
+
+    getGimmickFields(type: Nullable<GimmickType>): Nullable<AnyGimmickFields> {
+        return (type ? DYNAMIC_REGISTRY[type].fields : null) ?? null;
+    },
+
+    getGimmickField(type: Nullable<GimmickType>,
+                    field: string): Nullable<GimmickWriteDetailsField<Partial<Gimmick>>> {
+        return (type ? DYNAMIC_REGISTRY[type].fields?.[field] : null) ?? null;
+    },
+
+    getGimmickFieldNames(type: Nullable<GimmickType>): string[] {
+        const fields = (type ? DYNAMIC_REGISTRY[type].fields : null);
+        return fields ? Object.keys(fields) : [ ];
     },
 
     sanitizeGimmick(gimmick: Nullable<Gimmick>): Nullable<Gimmick> {
@@ -47,8 +88,8 @@ export const Gimmicks = {
         if (isNullish(gimmick))
             return null;
 
-        const draft = gimmick as Record<string, any>;
-        const details = Gimmicks.getGimmickDetails(gimmick.type);
+        const draft = gimmick as Record<string, unknown>;
+        const details = Gimmicks.getGimmickData(gimmick.type);
 
         // Remove unnecessary keys
         if (gimmick.activation !== 'interruption') {
@@ -87,52 +128,63 @@ export const Gimmicks = {
 
     },
 
-    validateGimmick(gimmick: Nullable<Gimmick>): GimmickIssues {
+    validateGimmick<K extends GimmickEffectType>(gimmick: Nullable<GimmickSpecs<K>>): GimmickIssues {
 
-        if (isNullish(gimmick))
+        if (!gimmick)
             return [ 'Null or undefined gimmick' ];
 
-        const details = Gimmicks.getGimmickDetails(gimmick.type);
-        if (!details)
+        const data = Gimmicks.getGimmickData(gimmick.type);
+        if (!data)
             return [ 'Invalid gimmick type' ];
 
-        const draft = gimmick as Record<string, any>;
         const result = [ ];
         if (!gimmick.activation || !Enums.activations.includes(gimmick.activation))
             result.push('Invalid activation');
-        if (details.turns !== false && !Numbers.isPositiveInteger(gimmick.turns))
+        if (data.turns !== false && !Numbers.isPositiveInteger(gimmick.turns))
             result.push('Invalid number turns');
         if (gimmick.activation === 'interruption' && (!gimmick.triggers?.length || intersection(Enums.interruptions, gimmick.triggers).length !== gimmick.triggers?.length))
             result.push('Invalid interruption trigger');
         if (gimmick.activation === 'interruption' && !Numbers.isPositiveInteger(gimmick.times))
             result.push('Invalid interruption times');
-        if (details.fields) {
-            for (const key in details.fields) {
-                const value = draft[key];
-                const field = details.fields[key] as any;
-                if (field.required && (isNullish(value) || value === ''))
-                    result.push(`Missing field "${ key }"`);
-                else if (value) {
-                    if ((field.type === 'class' && !Enums.classes.includes(value)) ||
-                        (field.type === 'integer' && !Numbers.isPositiveInteger(value)) ||
-                        (field.type === 'intimidation' && intersection(Enums.intimidations, value).length !== value.length) ||
-                        (field.type === 'multiplier' && !Numbers.isPositive(value)) ||
-                        (field.type === 'percentage' && !Numbers.isPositive(value)) ||
-                        (field.type === 'position' && !Enums.positions.includes(value)) ||
-                        (field.type === 'slot' && !Enums.slots.includes(value)) ||
-                        (field.type === 'slots' && intersection(value, Enums.slots).length !== value.length) ||
-                        (field.type === 'targets' && intersection(value, allTargets).length !== value.length) ||
-                        (field.type === 'timing' && !Enums.timings.includes(value))) {
-                        result.push(`Invalid value "${ value?.join?.(', ') ?? value }" for field "${ key }"`);
-                    }
-                }
-            }
+        for (const key in Gimmicks.getGimmickFieldNames(gimmick.type)) {
+            const draft = gimmick as Record<string, unknown>;
+            const value = draft[key];
+            const field = Gimmicks.getGimmickField(gimmick.type, key)!;
+            if (field.required && (isNullish(value) || value === ''))
+                result.push(`Missing field "${ key }"`);
+            else if (value && !FIELD_VALIDATION[field.type](value))
+                result.push(`Invalid value "${ isArray(value) ? value.join(', ') : value }" for field "${ key }"`);
         }
-        if (details.validate && !details.validate(gimmick))
+        if (data.validate && !data.validate(gimmick))
             result.push('Gimmick does not pass validation');
 
         return result;
 
     }
 
+};
+
+/*---------
+  Internals
+  ---------*/
+
+const FIELD_VALIDATION: Record<GimmickWriteDetailsSpecType, (v: unknown) => boolean> = {
+    boolean: v => isBoolean(v),
+    class: v => includesString(Enums.classes, v),
+    immunity: v => includesString(Enums.immunities, v),
+    integer: v => Numbers.isPositiveInteger(v),
+    intimidation: v => isArray(v) && v.every(v => includesString(Enums.intimidations, v)),
+    multiplier: v => Numbers.isPositive(v),
+    percentage: v => Numbers.isPositive(v),
+    position: v => includesString(Enums.positions, v),
+    removableEffect: value => includesString(Enums.removableEffects, value),
+    slot: v => includesString(Enums.slots, v),
+    slots: v => isArray(v) && v.every(v => includesString(Enums.slots, v)),
+    targets: v => isArray(v) && v.every(v => includesString(ALL_TARGETS, v)),
+    timing: v => includesString(Enums.timings, v)
+};
+
+function includesString(values: readonly string[],
+                        value: unknown): boolean {
+    return isString(value) && values.includes(value);
 }

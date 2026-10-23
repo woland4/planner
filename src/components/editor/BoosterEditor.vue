@@ -27,7 +27,7 @@
       Modals
       ------*/
 
-    const overlay = useOverlay()
+    const overlay = useOverlay();
     const unitPickingModal = overlay.create(UnitPickingModal);
 
     /*-----
@@ -35,9 +35,9 @@
       -----*/
 
     const props = defineProps<{
-        index: number,
-        collapsed: boolean,
-        validation?: Nullable<BoosterIssues>
+        index: number;
+        collapsed: boolean;
+        validation?: Nullable<BoosterIssues>;
     }>();
 
     /*-----
@@ -45,8 +45,8 @@
       -----*/
 
     const emit = defineEmits<{
-        toggle: [ index: number ],
-        remove: [ index: number ]
+        toggle: [ index: number ];
+        remove: [ index: number ];
     }>();
 
     /*-----
@@ -74,7 +74,7 @@
 
     async function onAddUnit() {
         const modal = unitPickingModal.open({ storageKey: 'booster', exclude: model.value.ids, multiple: true, noVariants: true });
-        const result = (await modal.result) as Nullable<{ id: number, variant?: number }[]>;
+        const result = (await modal.result) as Nullable<{ id: number; variant?: number }[]>;
         if ((result?.length ?? 0) > 0) // TODO Fix for variant support
             model.value.ids = unique([ ...(model.value.ids ?? [ ]), ...(result!.map(u => u.id) ?? [ ]) ]);
     }

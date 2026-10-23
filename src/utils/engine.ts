@@ -1,15 +1,24 @@
 import { isNullish, isString } from 'remeda';
 
 import { Units } from '@/utils/units.ts';
+import { type ParsedSupport, Supports } from '@/utils/supports.ts';
 
-import type { Nullable } from '@/types/utils.ts';
 import type { GimmickType } from '@/types/enums.ts';
 import type { GimmickCheckContext } from '@/types/engine.ts';
-import { type ParsedSupport, Supports } from '@/utils/supports.ts';
+import type { Gimmick } from '@/types/gimmicks.ts';
+import type { Battle, Team } from '@/types/battles.ts';
+import type { Nullable } from '@/types/utils.ts';
 
 /*-----
   Types
   -----*/
+
+export type SearchContext = {
+    gimmick: Gimmick;
+    battle: Battle;
+    stageIndex: number;
+    team: Team;
+};
 
 export type SearchParams = {
     captain?: RegExp;
@@ -64,7 +73,7 @@ export const Engine = {
       Search Methods
       --------------*/
 
-    search(context: GimmickCheckContext<any>,
+    search(context: SearchContext,
            params: SearchParams): SearchResult[] {
 
         const result: Nullable<SearchResult>[] = [ ];
@@ -113,15 +122,15 @@ export const Engine = {
 
     }
 
-}
+};
 
 /*---------
   Internals
   ---------*/
 
-function extractCaptains(context: GimmickCheckContext<any>): SearchResultCandidate[] {
+function extractCaptains(context: GimmickCheckContext<GimmickType>): SearchResultCandidate[] {
     const result: SearchResultCandidate[] = [ ];
-    for (let i of [ 5, 0 ]) {
+    for (const i of [ 5, 0 ]) {
         const unit = context.team.units[i];
         const captain = Units.getCaptain(unit?.id, unit?.variant, unit?.llbLevel ?? 0);
         if (captain)
@@ -130,31 +139,31 @@ function extractCaptains(context: GimmickCheckContext<any>): SearchResultCandida
     return result;
 }
 
-function extractPotentials(context: GimmickCheckContext<any>): SearchResultCandidate[] {
+function extractPotentials(context: GimmickCheckContext<GimmickType>): SearchResultCandidate[] {
     const result: SearchResultCandidate[] = [ ];
-    for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
+    for (const i of [ 5, 0, 4, 1, 3, 2 ]) {
         const potentials = Units.getPotentials(context.team.units[i]?.id);
-        for (let potential of potentials)
+        for (const potential of potentials)
             result.push({ source: 'potential', index: i, text: potential });
     }
     return result;
 
 }
 
-function extractSailors(context: GimmickCheckContext<any>): SearchResultCandidate[] {
+function extractSailors(context: GimmickCheckContext<GimmickType>): SearchResultCandidate[] {
     const result: SearchResultCandidate[] = [ ];
-    for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
+    for (const i of [ 5, 0, 4, 1, 3, 2 ]) {
         const unit = context.team.units[i];
         const sailors = Units.getSailors(unit?.id, unit?.variant);
-        for (let sailor of sailors)
+        for (const sailor of sailors)
             result.push({ source: 'sailor', index: i, text: sailor });
     }
     return result;
 }
 
-function extractSpecials(context: GimmickCheckContext<any>): SearchResultCandidate[] {
+function extractSpecials(context: GimmickCheckContext<GimmickType>): SearchResultCandidate[] {
     const result: SearchResultCandidate[] = [ ];
-    for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
+    for (const i of [ 5, 0, 4, 1, 3, 2 ]) {
         const unit = context.team.units[i];
         const specials = Units.getSpecial(unit?.id, unit?.variant, unit?.llbLevel ?? 0);
         const special = specials?.length ? specials[specials.length - 1] : null;
@@ -164,9 +173,9 @@ function extractSpecials(context: GimmickCheckContext<any>): SearchResultCandida
     return result;
 }
 
-function extractSuperSpecials(context: GimmickCheckContext<any>): SearchResultCandidate[] {
+function extractSuperSpecials(context: GimmickCheckContext<GimmickType>): SearchResultCandidate[] {
     const result: SearchResultCandidate[] = [ ];
-    for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
+    for (const i of [ 5, 0, 4, 1, 3, 2 ]) {
         const unit = context.team.units[i];
         const special = Units.getSuperSpecial(unit?.id, unit?.variant);
         if (special?.description)
@@ -175,9 +184,9 @@ function extractSuperSpecials(context: GimmickCheckContext<any>): SearchResultCa
     return result;
 }
 
-function extractSupports(context: GimmickCheckContext<any>): SearchResultCandidate[] {
+function extractSupports(context: GimmickCheckContext<GimmickType>): SearchResultCandidate[] {
     const result: SearchResultCandidate[] = [ ];
-    for (let i of [ 0, 4, 1, 3, 2 ]) {
+    for (const i of [ 0, 4, 1, 3, 2 ]) {
         const unit = context.team.units[i];
         const support = Units.getSupport(unit?.support);
         if (support?.description)
@@ -186,9 +195,9 @@ function extractSupports(context: GimmickCheckContext<any>): SearchResultCandida
     return result;
 }
 
-function extractSwaps(context: GimmickCheckContext<any>): SearchResultCandidate[] {
+function extractSwaps(context: GimmickCheckContext<GimmickType>): SearchResultCandidate[] {
     const result: SearchResultCandidate[] = [ ];
-    for (let i of [ 5, 0, 4, 1, 3, 2 ]) {
+    for (const i of [ 5, 0, 4, 1, 3, 2 ]) {
         const unit = context.team.units[i];
         const swap = Units.getSwap(unit?.id);
         if (swap?.description)
@@ -199,7 +208,7 @@ function extractSwaps(context: GimmickCheckContext<any>): SearchResultCandidate[
     return result;
 }
 
-function matchCandidate(context: GimmickCheckContext<any>,
+function matchCandidate(context: GimmickCheckContext<GimmickType>,
                         effect: RegExp,
                         candidate: SearchResultCandidate): Nullable<SearchResult> {
 
@@ -218,7 +227,7 @@ function matchCandidate(context: GimmickCheckContext<any>,
 
 }
 
-function resolveAvailability(context: GimmickCheckContext<any>,
+function resolveAvailability(context: GimmickCheckContext<GimmickType>,
                              trigger: ParsedSupport): SearchResultConfidence {
 
     switch (trigger.trigger) {
@@ -238,22 +247,21 @@ function resolveAvailability(context: GimmickCheckContext<any>,
 
 }
 
-function gimmickProcsOn(context: GimmickCheckContext<any>,
+function gimmickProcsOn(context: GimmickCheckContext<GimmickType>,
                         gimmickType: GimmickType): boolean {
     return context.battle.stages[context.stageIndex]
         ?.gimmicks
-        ?.some(g => g.type === gimmickType)
-        ?? false;
+        ?.some(g => g.type === gimmickType) ?? false;
 }
 
-function gimmickProcsBefore(context: GimmickCheckContext<any>,
+function gimmickProcsBefore(context: GimmickCheckContext<GimmickType>,
                             gimmickType: GimmickType): boolean {
     return context.battle.stages
         .slice(0, context.stageIndex)
         .some(s => s.gimmicks?.some(g => g.type === gimmickType));
 }
 
-function procsOnStage(context: GimmickCheckContext<any>,
+function procsOnStage(context: GimmickCheckContext<GimmickType>,
                       targetStage: 1 | 2 | 3 | 4 | 5 | 'last') {
     if (!isString(targetStage))
         return context.stageIndex + 1 === targetStage;

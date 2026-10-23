@@ -64,7 +64,7 @@
       Computed
       --------*/
 
-    const teamCompositionIssues = computed<{ name: string, issues: IssueDetail[] }[]>(() => {
+    const teamCompositionIssues = computed<{ name: string; issues: IssueDetail[] }[]>(() => {
 
         const team = store.currentTab?.team;
         if (!team?.units?.length) return [ ];
@@ -82,7 +82,7 @@
                 .map(issue => ({ ...issue, badge: 'SUPPORT' }))
         ], issue => {
             const unit = team.units[issue.index];
-            return `${ unit?.id }/${ unit?.variant ?? 0 }/${ issue.issue }`
+            return `${ unit?.id }/${ unit?.variant ?? 0 }/${ issue.issue }`;
         });
 
         const sorted = sortBy(data,
@@ -120,7 +120,7 @@
 
         const result: IssueGroup[] = [ ];
 
-        for (let n=0; n<battle.stages.length; ++n) {
+        for (let n = 0; n < battle.stages.length; ++n) {
 
             const items = checkGimmicks(battle, n, store.currentTab?.team);
             if (!items.length)

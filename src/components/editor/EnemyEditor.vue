@@ -20,7 +20,7 @@
       -----*/
 
     const props = defineProps<{
-        validation: Nullable<GimmickIssues>
+        validation: Nullable<GimmickIssues>;
     }>();
 
     /*-----
@@ -28,8 +28,8 @@
       -----*/
 
     const emit = defineEmits<{
-        remove: [ ],
-        tab: [ e: Event ]
+        remove: [ ];
+        tab: [ e: Event ];
     }>();
 
     /*-----

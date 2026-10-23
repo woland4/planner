@@ -33,7 +33,7 @@ export type Unit = {
 
     special: Nullable<{ description: string; turns: Nullable<number> }[]>;
 
-    superSpecial: Nullable<{ description: string, condition: string }>;
+    superSpecial: Nullable<{ description: string; condition: string }>;
 
     swap: Nullable<{
         description: string;
@@ -45,9 +45,9 @@ export type Unit = {
 
     potentials: string[];
 
-    support: Nullable<{ description: string, condition: string }>;
+    support: Nullable<{ description: string; condition: string }>;
 
-}
+};
 
 /*-------
   Exports
@@ -113,21 +113,21 @@ export const Units = {
     },
 
     getSuperSpecial(unitID: Nullable<number>,
-                    variant: Nullable<number> = null): Nullable<{ description: string, condition: string }> {
+                    variant: Nullable<number> = null): Nullable<{ description: string; condition: string }> {
         return reconstructSuperSpecial(unitID, variant);
     },
 
-    getSupport(unitID: Nullable<number>): Nullable<{ description: string, condition: string }> {
+    getSupport(unitID: Nullable<number>): Nullable<{ description: string; condition: string }> {
         return reconstructSupport(unitID);
     },
 
     getSpecial(unitID: Nullable<number>,
                variant: Nullable<number> = null,
-               llbLevel = 0): { description: string, turns: number }[] {
+               llbLevel = 0): { description: string; turns: number }[] {
         return reconstructSpecial(unitID, variant, llbLevel);
     },
 
-    getSwap(unitID: Nullable<number>): Nullable<{ description: string, super?: string, superTurns?: number }> {
+    getSwap(unitID: Nullable<number>): Nullable<{ description: string; super?: string; superTurns?: number }> {
         return reconstructSwap(unitID);
     },
 
@@ -203,7 +203,7 @@ export const Units = {
         return !!window.details[unitID]?.VSCondition;
     }
 
-}
+};
 
 /*---------
   Internals
@@ -221,7 +221,7 @@ function reconstructUnit(unitID: Nullable<number>,
 
     if (!unitID) return null;
 
-    const fullID = variant ? `${ unitID }-${ variant}` : unitID;
+    const fullID = variant ? `${ unitID }-${ variant }` : unitID;
     const unit = window.units[fullID] ?? window.units[unitID];
     const details = window.details[fullID] ?? window.details[unitID];
     if (!unit || !details) return null;
@@ -278,7 +278,7 @@ function reconstructCaptain(unitID: Nullable<number>,
     let captain: string | Record<string, string> = data.captain;
     if (llbLevel > 0) {
         const lLimit = data?.lLimit ?? [ ];
-        for (let i=llbLevel-1; i>=0; --i) {
+        for (let i = llbLevel - 1; i >= 0; --i) {
             if (!isNullish(lLimit[i]?.captain)) {
                 captain = lLimit[i].captain!;
                 break;
@@ -389,9 +389,9 @@ function reconstructSailors(unitID: Nullable<number>,
     if (isString(data.sailor))
         result.push(data.sailor);
     else if (isPlainObject(data.sailor)) {
-        for (let key of [ 'level1', 'level2', 'level3', 'level4', 'level5', 'level6' ]) {
-            if ((data.sailor as any)[key])
-                result.push((data.sailor as any)[key]);
+        for (const key of [ 'level1', 'level2', 'level3', 'level4', 'level5', 'level6' ] as const) {
+            if (data.sailor[key])
+                result.push(data.sailor[key]);
         }
         if (data.sailor[baseKey])
             result.push(data.sailor[baseKey]);
@@ -399,14 +399,14 @@ function reconstructSailors(unitID: Nullable<number>,
 
     if (llbLevel > 0) {
         const lLimit = data?.lLimit ?? [ ];
-        for (let i=0; i<llbLevel; ++i) {
+        for (let i = 0; i < llbLevel; ++i) {
 
             const sailor = lLimit[i]?.sailor;
             if (!sailor) continue;
 
-            for (let key of [ 'level1', 'level2', 'level3', 'level4', 'level5', 'level6' ]) {
-                if ((sailor as any)[key])
-                    result.push((sailor as any)[key]);
+            for (const key of [ 'level1', 'level2', 'level3', 'level4', 'level5', 'level6' ] as const) {
+                if (sailor[key])
+                    result.push(sailor[key]);
             }
 
             if (sailor[baseKey])
@@ -422,7 +422,7 @@ function reconstructSailors(unitID: Nullable<number>,
 // Returns one element per stage (single element for single-stage specials)
 function reconstructSpecial(unitID: Nullable<number>,
                             variant: Nullable<number> = null,
-                            llbLevel: number = 0): { description: string, turns: number }[] {
+                            llbLevel: number = 0): { description: string; turns: number }[] {
 
     if (!unitID) return [ ];
 
@@ -433,7 +433,7 @@ function reconstructSpecial(unitID: Nullable<number>,
     let result = data.special;
     if (llbLevel > 0) {
         const lLimit = data?.lLimit ?? [ ];
-        for (let i=llbLevel-1; i>=0; --i) {
+        for (let i = llbLevel - 1; i >= 0; --i) {
             if (!isNullish(lLimit[i]?.special)) {
                 result = lLimit[i].special!;
                 break;
@@ -458,10 +458,10 @@ function reconstructSpecial(unitID: Nullable<number>,
         return [ ];
     else if (isString(result)) {
         const cooldown = window.cooldowns[fullID] ?? window.cooldowns[unitID] ?? [ ];
-        return [{
+        return [ {
             description: result,
             turns: cooldown[cooldown.length - 1] ?? null
-        }];
+        } ];
     } else if (isArray(result)) {
         return result.map(s => ({
             description: s.description,
@@ -473,7 +473,7 @@ function reconstructSpecial(unitID: Nullable<number>,
 }
 
 function reconstructSuperSpecial(unitID: Nullable<number>,
-                                 variant: Nullable<number> = null): Nullable<{ description: string, condition: string }> {
+                                 variant: Nullable<number> = null): Nullable<{ description: string; condition: string }> {
 
     if (!unitID) return null;
 
@@ -492,7 +492,7 @@ function reconstructSuperSpecial(unitID: Nullable<number>,
 
 }
 
-function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: string, condition: string }> {
+function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: string; condition: string }> {
 
     if (!unitID) return null;
 
@@ -509,7 +509,7 @@ function reconstructSupport(unitID: Nullable<number>): Nullable<{ description: s
 
 }
 
-function reconstructSwap(unitID: Nullable<number>): Nullable<{ description: string; super?: string; superTurns?: number; }> {
+function reconstructSwap(unitID: Nullable<number>): Nullable<{ description: string; super?: string; superTurns?: number }> {
 
     if (!unitID) return null;
 
@@ -547,7 +547,7 @@ function reconstructTags(unitID: Nullable<number>,
         .flat()
         .map(t => t.trim())
         .filter(t => !isNullish(t))
-        .filter((x,n,a) => a.indexOf(x) === n);
+        .filter((x, n, a) => a.indexOf(x) === n);
 
 }
 

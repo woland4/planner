@@ -1,13 +1,12 @@
 <script setup lang="ts">
     import { computed } from 'vue';
-    import { isFunction, isNullish } from 'remeda';
 
-    import { type GimmickDetails, GimmickRegistry } from '@/utils/registry.ts';
+    import { Gimmicks } from '@/utils/gimmicks.ts';
     import { Numbers } from '@/utils/numbers.ts';
+    import { I18N } from '@/utils/i18n.ts';
 
     import type { Gimmick } from '@/types/gimmicks.ts';
     import type { Nullable } from '@/types/utils.ts';
-    import { I18N } from '@/utils/i18n.ts';
 
     /*-------
       Options
@@ -20,36 +19,20 @@
       -----*/
 
     const props = defineProps<{
-        gimmick: Gimmick
+        gimmick: Gimmick;
     }>();
 
     /*--------
       Computed
       --------*/
 
-    const data = computed<Nullable<GimmickDetails<any>>>(() => GimmickRegistry[props.gimmick.type]);
+    const icon = computed<Nullable<string>>(() => Gimmicks.getGimmickIcon(props.gimmick));
 
-    const icon = computed<Nullable<string>>(() => {
-        if (!data.value) return props.gimmick.type ?? null;
-        else if (isFunction(data.value.icon)) return data.value.icon(props.gimmick);
-        else return data.value.icon ?? props.gimmick.type;
-    });
+    const label = computed<Nullable<string>>(() => Gimmicks.getGimmickLabel(props.gimmick));
 
-    const label = computed<Nullable<string>>(() => {
-        if (!data.value) return null;
-        else if (isFunction(data.value.label)) return data.value.label(props.gimmick);
-        else return data.value.label;
-    });
+    const details = computed<Nullable<string>[]>(() => Gimmicks.getGimmickDetails(props.gimmick) ?? [ ]);
 
-    const details = computed<Nullable<string>[]>(() => {
-        if (!data.value) return [ ];
-        return data.value.details?.(props.gimmick).filter(t => !isNullish(t)) ?? [ ];
-    });
-
-    const lines = computed<Nullable<string>[]>(() => {
-        if (!data.value) return [ ];
-        return data.value.lines?.(props.gimmick).filter(t => !isNullish(t)) ?? [ ];
-    });
+    const lines = computed<Nullable<string>[]>(() => Gimmicks.getGimmickLines(props.gimmick) ?? [ ]);
 
     const triggers = computed<Nullable<string>>(() => {
         if (!props.gimmick.triggers?.length) return null;

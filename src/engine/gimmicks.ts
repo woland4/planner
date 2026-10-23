@@ -17,7 +17,7 @@ export function checkGimmicks(battle: Nullable<Battle>,
         return [ ];
 
     const result: Nullable<GimmickCheckResult>[] = [ ];
-    for (let gimmick of stage.gimmicks) {
+    for (const gimmick of stage.gimmicks) {
         const checker = indexedCheckers[gimmick.type];
         if (checker?.check) {
             result.push(checker.check({

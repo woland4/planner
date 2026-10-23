@@ -8,7 +8,7 @@ import { isEmptyish, omit } from 'remeda';
 
 const IGNORABLE_SUPPORT_EFFECTS = [
     /reduces damage received from [^.]+ by [\d.]+%\./i,
-    /adds [\d.]+% of this character's base [a-z\s,]+ to the supported character's base [a-z\s,]+\./i,
+    /adds [\d.]+% of this character's base [a-z\s,]+ to the supported character's base [a-z\s,]+\./i
 ];
 
 const SEGMENT_REGEXES = {
@@ -18,9 +18,9 @@ const SEGMENT_REGEXES = {
     whenEnemyBuffed: /when (?:an|the) enemy gains (.+)/i,
     whenStageReached: /when you reach (.+)/i,
     whenTimingHit: /when the supported character hits (.+)/i
-}
+};
 
-const INFLICTABLE_DEBUFFS: { text: string, gimmick: GimmickType }[] = [
+const INFLICTABLE_DEBUFFS: { text: string; gimmick: GimmickType }[] = [
     { text: 'atk down', gimmick: 'attackDown' },
     { text: 'bind', gimmick: 'bind' },
     { text: 'burn', gimmick: 'burn' },
@@ -40,7 +40,7 @@ const INFLICTABLE_DEBUFFS: { text: string, gimmick: GimmickType }[] = [
     { text: 'toxic', gimmick: 'poison' }
 ];
 
-const INFLICTABLE_BUFFS: { text: string, gimmick: GimmickType }[] = [
+const INFLICTABLE_BUFFS: { text: string; gimmick: GimmickType }[] = [
     { text: 'atk up', gimmick: 'attackUpEnemy' },
     { text: 'enrage', gimmick: 'provoked' },
     { text: 'increased defense', gimmick: 'defenseUp' },
@@ -68,7 +68,7 @@ export type ParsedSupport = {
         | 'special' // When the supported character uses...
         | 'gimmick' // When an enemy inflicts you with... or When the enemy gains...
         | 'stage' // When you reach...
-        | 'timing' // When the supported character hits...;
+        | 'timing'; // When the supported character hits...;
 
     once?: boolean; // Once per adventure...
 
@@ -86,7 +86,7 @@ export type ParsedSupport = {
 
     effect: string;
 
-}
+};
 
 /*-------
   Exports
@@ -99,7 +99,7 @@ export const Supports = {
         if (!support?.length) return null;
 
         let result = support;
-        for (let regex of IGNORABLE_SUPPORT_EFFECTS)
+        for (const regex of IGNORABLE_SUPPORT_EFFECTS)
             result = result.replace(regex, '');
         result = result.trim();
 
@@ -137,7 +137,7 @@ export const Supports = {
 
     }
 
-}
+};
 
 /*---------
   Internals
@@ -152,8 +152,7 @@ function sanitizeSupport(support: string): string {
         .replace(/a special to inflict ([^,]+)/gi, `a $1 special`) // Can't handle multiple effects
         .replace(/a special to poison enemies/gi, `a poison special`);
 
-
-    for (let regex of IGNORABLE_SUPPORT_EFFECTS)
+    for (const regex of IGNORABLE_SUPPORT_EFFECTS)
         result = result.replace(regex, '');
 
     return result.trim();
@@ -195,7 +194,7 @@ function parseBuffSupport(support: string,
 function parseStageSupport(support: string,
                            result: Partial<ParsedSupport>) {
 
-    let remaining = support
+    const remaining = support
         .match(SEGMENT_REGEXES.whenStageReached)![1].trim()
         .replace(/^the\s+/i, '')
         .trim();
@@ -223,7 +222,7 @@ function parseStageSupport(support: string,
 function parseTimingSupport(support: string,
                             result: Partial<ParsedSupport>) {
 
-    let remaining = support
+    const remaining = support
         .match(SEGMENT_REGEXES.whenTimingHit)![1].trim()
         .replace(/^an?\s+/i, '')
         .trim();
@@ -249,7 +248,7 @@ function parseTimingSupport(support: string,
 // "and", "or", "a", "an" and commas are considered valid tokens (and they are ignored)
 // The first non-recognized token determines the beginning of the effect
 function parseBuffOrDebuffSupport(data: string,
-                                  configuration: { text: string, gimmick: GimmickType }[]): Nullable<{ types: GimmickType[], effect: string }> {
+                                  configuration: { text: string; gimmick: GimmickType }[]): Nullable<{ types: GimmickType[]; effect: string }> {
 
     const types: GimmickType[] = [ ];
 

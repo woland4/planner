@@ -10,14 +10,14 @@
       -----*/
 
     const props = defineProps<{
-        placeholder?: string
+        placeholder?: string;
     }>();
 
     /*-----
       State
       -----*/
 
-    const model = defineModel<any>({ default: '' });
+    const model = defineModel();
 </script>
 
 <template>

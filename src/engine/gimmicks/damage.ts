@@ -43,7 +43,7 @@ export default {
 
         const requiresNullification = Numbers.isPositive(context.gimmick.percentage);
 
-        const result: { index: number, source: string, reduction?: boolean, amount: Nullable<string> }[] = [ ];
+        const result: { index: number; source: string; reduction?: boolean; amount: Nullable<string> }[] = [ ];
         matches.forEach(match => {
             const amount = match.groups.nullification ? '100%' : (match.groups.reduction ?? null);
             if (requiresNullification && amount !== '100%') return;

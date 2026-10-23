@@ -1,6 +1,6 @@
 declare module '*.vue' {
     import type { DefineComponent } from 'vue';
-    const component: DefineComponent<{}, {}, any>;
+    const component: DefineComponent<object, object, unknown>;
     export default component;
 }
 
@@ -69,20 +69,20 @@ interface Window {
 
                     special?: {
 
-                        base?: string | { cooldown: number[], description: string }[]; // Single unit
+                        base?: string | { cooldown: number[]; description: string }[]; // Single unit
 
-                        level1?: string | { cooldown: number[], description: string }[]; // Single unit, LB1
-                        level2?: string | { cooldown: number[], description: string }[]; // Single unit, LB2
-                        level3?: string | { cooldown: number[], description: string }[]; // Single unit, LB3
-                        level4?: string | { cooldown: number[], description: string }[]; // Single unit, LB4
-                        level5?: string | { cooldown: number[], description: string }[]; // Single unit, LB5
-                        level6?: string | { cooldown: number[], description: string }[]; // Single unit, LB6
+                        level1?: string | { cooldown: number[]; description: string }[]; // Single unit, LB1
+                        level2?: string | { cooldown: number[]; description: string }[]; // Single unit, LB2
+                        level3?: string | { cooldown: number[]; description: string }[]; // Single unit, LB3
+                        level4?: string | { cooldown: number[]; description: string }[]; // Single unit, LB4
+                        level5?: string | { cooldown: number[]; description: string }[]; // Single unit, LB5
+                        level6?: string | { cooldown: number[]; description: string }[]; // Single unit, LB6
 
-                        character1?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 1
-                        character2?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 2
-                        combined?: string | { cooldown: number[], description: string }[]; // Dual combined
+                        character1?: string | { cooldown: number[]; description: string }[]; // Dual/VS variant 1
+                        character2?: string | { cooldown: number[]; description: string }[]; // Dual/VS variant 2
+                        combined?: string | { cooldown: number[]; description: string }[]; // Dual combined
 
-                    }
+                    };
 
               }[];
 
@@ -94,7 +94,7 @@ interface Window {
                   description: string[];
               }[];
 
-        sailor ?:
+        sailor?:
             | null
             | undefined
             | string
@@ -109,30 +109,29 @@ interface Window {
                     level5?: string;
                     level6?: string;
 
-                    character1?: string | { base?: string; base2?: string; };
-                    character2?: string | { base?: string; base2?: string; };
+                    character1?: string | { base?: string; base2?: string };
+                    character2?: string | { base?: string; base2?: string };
                     combined?: string;
-
 
               };
 
         special?:
             | string
-            | { cooldown: number[], description: string }[]
+            | { cooldown: number[]; description: string }[]
             | {
 
-                    base?: string | { cooldown: number[], description: string }[]; // Single unit
+                    base?: string | { cooldown: number[]; description: string }[]; // Single unit
 
-                    level1?: string | { cooldown: number[], description: string }[]; // Single unit, LB1
-                    level2?: string | { cooldown: number[], description: string }[]; // Single unit, LB2
-                    level3?: string | { cooldown: number[], description: string }[]; // Single unit, LB3
-                    level4?: string | { cooldown: number[], description: string }[]; // Single unit, LB4
-                    level5?: string | { cooldown: number[], description: string }[]; // Single unit, LB5
-                    level6?: string | { cooldown: number[], description: string }[]; // Single unit, LB6
+                    level1?: string | { cooldown: number[]; description: string }[]; // Single unit, LB1
+                    level2?: string | { cooldown: number[]; description: string }[]; // Single unit, LB2
+                    level3?: string | { cooldown: number[]; description: string }[]; // Single unit, LB3
+                    level4?: string | { cooldown: number[]; description: string }[]; // Single unit, LB4
+                    level5?: string | { cooldown: number[]; description: string }[]; // Single unit, LB5
+                    level6?: string | { cooldown: number[]; description: string }[]; // Single unit, LB6
 
-                    character1?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 1
-                    character2?: string | { cooldown: number[], description: string }[]; // Dual/VS variant 2
-                    combined?: string | { cooldown: number[], description: string }[]; // Dual combined
+                    character1?: string | { cooldown: number[]; description: string }[]; // Dual/VS variant 1
+                    character2?: string | { cooldown: number[]; description: string }[]; // Dual/VS variant 2
+                    combined?: string | { cooldown: number[]; description: string }[]; // Dual combined
 
               };
 
@@ -144,9 +143,9 @@ interface Window {
             description: string[];
         }[];
 
-        swap?: string | { base: string, super: string, superTurns: number };
+        swap?: string | { base: string; super: string; superTurns: number };
 
-        VSSpecial?: { character1: string, character2: string };
+        VSSpecial?: { character1: string; character2: string };
         VSCondition?: Nullable<string>;
 
     }>;

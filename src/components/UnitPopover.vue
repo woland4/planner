@@ -30,17 +30,16 @@
 
     const props = defineProps<{
 
-        unitId: number,
-        variant?: Nullable<number>,
+        unitId: number;
+        variant?: Nullable<number>;
         llbLevel?: Nullable<number>;
 
-        index?: Nullable<number>,
+        index?: Nullable<number>;
 
-        hideCaptain?: boolean,
-        support?: Nullable<boolean>,
+        hideCaptain?: boolean;
+        support?: Nullable<boolean>;
 
-        insideModal?: Nullable<boolean>
-
+        insideModal?: Nullable<boolean>;
 
     }>();
 
@@ -52,7 +51,7 @@
 
     const sections = computed<Section[]>(() => {
         if (props.support)
-            return supportSection.value ? [ supportSection.value ] : [{ title: 'Support', contents: 'Nope.' }];
+            return supportSection.value ? [ supportSection.value ] : [ { title: 'Support', contents: 'Nope.' } ];
         else {
             return [
                 props.hideCaptain ? null : captainSection.value,
@@ -72,7 +71,7 @@
             title: 'Captain Ability',
             contents: generateContents(unit.value.captain)
         };
-    })
+    });
 
     const potentialSection = computed<Nullable<Section>>(() => {
         if (!unit.value?.potentials?.length)
@@ -193,7 +192,7 @@
     }
 
     function generateSpecialSection(title: string,
-                                    special: { description: string, turns: Nullable<number> }[]): Section {
+                                    special: { description: string; turns: Nullable<number> }[]): Section {
 
         // Single-stage
         if (special.length < 2) {
@@ -205,7 +204,7 @@
 
         // Multi-stage
         const lines = [ ];
-        for (let i=0; i<special.length; ++i) {
+        for (let i = 0; i < special.length; ++i) {
             lines.push(generateHeader(`Stage ${ i + 1 } (${ special[i].turns ?? '???' } turns)`));
             lines.push(generateContents(special[i].description));
         }

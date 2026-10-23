@@ -9,7 +9,7 @@ export type Store = {
     leftSidebarVisible: boolean;
     rightSidebarVisible: boolean;
 
-}
+};
 
 export type Tab = {
     index: number;

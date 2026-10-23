@@ -90,7 +90,7 @@ export const GimmickRegistry: GimmickRegistry = {
         label: 'Bind',
         details: g => {
             const targets = [ ];
-            for (let t of g.targets ?? [ ])
+            for (const t of g.targets ?? [ ])
                 targets.push(target(t));
             return [ join(targets, '+') ];
         },
@@ -353,7 +353,7 @@ export const GimmickRegistry: GimmickRegistry = {
             else if (g.except === 'defenseDown') tokens.push('except defense down');
             else if (g.except === 'delay') tokens.push('except delay');
             else if (g.except === 'poison') tokens.push('except poison');
-            return [ join(tokens, ' ') ]
+            return [ join(tokens, ' ') ];
         },
 
         usuallyPermanent: true,
@@ -690,7 +690,7 @@ export const GimmickRegistry: GimmickRegistry = {
     },
 
     targetLock: {
-        label: 'Target lock',
+        label: 'Target lock'
     },
 
     territory: {
@@ -794,7 +794,7 @@ export const GimmickRegistry: GimmickRegistry = {
 
     }
 
-}
+};
 
 /*-------
   Helpers
@@ -816,7 +816,7 @@ function target(target: GimmickTarget | Type | Class | Tag): string {
     return I18N.position(target as Position) ?? target;
 }
 
-function join(values: Nullable<Nullable<any>[]>, separator: string = ', '): Nullable<string> {
+function join(values: Nullable<unknown[]>, separator: string = ', '): Nullable<string> {
     const sanitized = values?.filter(v => !isNullish(v));
     if (!sanitized?.length) return null;
     else return sanitized.join(separator);
@@ -849,14 +849,14 @@ export type GimmickReadDetails<G> = {
     label: string | ((gimmick: G) => string);
     details?: ((gimmick: G) => Nullable<string>[]);
     lines?: ((gimmick: G) => Nullable<string>[]);
-}
+};
 
 export type GimmickWriteDetails<G> = {
     turns?: boolean;
     usuallyPermanent?: boolean;
     fields?: { [K in GimmickWriteDetailsSpecName<G>]: GimmickWriteDetailsField<G> };
     validate?: ((gimmick: G) => Nullable<boolean>);
-}
+};
 
 export type GimmickWriteDetailsField<G> = {
     type: GimmickWriteDetailsSpecType;

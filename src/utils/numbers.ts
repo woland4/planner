@@ -3,19 +3,19 @@ import { isNullish } from 'remeda';
 
 export const Numbers = {
 
-    isFinite(value: Nullable<any>): boolean {
+    isFinite(value: unknown): value is number {
         return (typeof value === 'number' && Number.isFinite(value));
     },
 
-    isInteger(value: Nullable<any>): boolean {
+    isInteger(value: unknown): value is number {
         return Number.isInteger(value);
     },
 
-    isPositive(value: Nullable<any>): boolean {
+    isPositive(value: unknown): value is number {
         return Numbers.isFinite(value) && value > 0;
     },
 
-    isPositiveInteger(value: Nullable<any>): boolean {
+    isPositiveInteger(value: unknown): value is number {
         return Numbers.isInteger(value) && value > 0;
     },
 

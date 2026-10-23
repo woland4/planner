@@ -9,35 +9,29 @@ import type { Nullable } from '@/types/utils.ts';
 export type Battle = {
     boosters?: Booster[];
     stages: Stage[];
-}
+};
 
 export type Booster = {
     ids: number[];
     pureMultiplier?: number;
     additiveMultiplier?: number;
-}
+};
 
 export type Stage = {
     enemies?: Enemy[];
     gimmicks?: Gimmick[];
-}
+};
 
 export type Enemy = {
     types: Type[];
     count?: number;
-}
+};
 
 /*-----
   Teams
   -----*/
 
 export type Team = {
-
-    /*ship: {
-        id: number,
-        level: number,
-        stars: number
-    },*/
 
     units: [
         Nullable<TeamUnit>,
@@ -46,15 +40,15 @@ export type Team = {
         Nullable<TeamUnit>,
         Nullable<TeamUnit>,
         Nullable<TeamUnit>
-    ]
+    ];
 
 };
 
 export type TeamUnit = {
-    id: number,
-    variant?: Nullable<number>,
-    support?: Nullable<number>,
-    llbLevel?: Nullable<number>
+    id: number;
+    variant?: Nullable<number>;
+    support?: Nullable<number>;
+    llbLevel?: Nullable<number>;
 };
 
 export type SavedTeam = { name: string } & Team;

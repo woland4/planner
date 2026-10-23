@@ -23,7 +23,7 @@
       Modals
       ------*/
 
-    const overlay = useOverlay()
+    const overlay = useOverlay();
     const unitPickingModal = overlay.create(UnitPickingModal);
 
     /*-----
@@ -31,7 +31,7 @@
       -----*/
 
     const props = defineProps<{
-        boosters?: Nullable<Booster[]>
+        boosters?: Nullable<Booster[]>;
     }>();
 
     /*-----
@@ -53,7 +53,7 @@
         const teamIndex = templateIndexToTeamIndex(templateIndex);
 
         const usedFamilies: string[] = [ ];
-        for (let i=0; i<5; ++i) {
+        for (let i = 0; i < 5; ++i) {
             if (i === teamIndex) continue;
             const unit = model.value.units[i];
             if (unit?.id) usedFamilies.push(...Units.getFamilies(unit.id, unit.variant));
@@ -66,7 +66,7 @@
             disabledFamilies: usedFamilies
         });
 
-        const result = (await modal.result) as Nullable<{ id: number, variant?: number }>;
+        const result = (await modal.result) as Nullable<{ id: number; variant?: number }>;
         if (isNumber(result?.id))
             model.value.units[teamIndex] = { id: result.id, variant: result.variant, support: null };
     }
@@ -102,7 +102,7 @@
         const teamIndex = templateIndexToTeamIndex(templateIndex);
 
         const usedFamilies: string[] = [ ];
-        for (let i=0; i<5; ++i) {
+        for (let i = 0; i < 5; ++i) {
             const unit = model.value.units[i];
             if (unit?.id) usedFamilies.push(...Units.getFamilies(unit.id, unit.variant));
             if (i !== teamIndex && unit?.support)
@@ -242,7 +242,6 @@
                     </UBadge>
 
                 </template>
-
 
             </div>
 

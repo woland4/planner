@@ -69,6 +69,7 @@ const TITLES = [
   Exports
   -------*/
 
+/* eslint-disable @stylistic/brace-style */
 export const Bulletizer = {
 
     bulletize(input: string): string {
@@ -86,7 +87,7 @@ export const Bulletizer = {
         // detection so we escape them here and unescape them at the end
         let escapedInput = sanitizedInput
             .trim()
-            .replace(/(\d)\.(\d)/g, "$1@@@$2");
+            .replace(/(\d)\.(\d)/g, '$1@@@$2');
 
         // Same as above for titles (eg. "Dr. Hiluluk")
         for (const title of TITLES) {
@@ -170,6 +171,7 @@ export const Bulletizer = {
 
         });
 
-    },
+    }
 
 };
+/* eslint-enable @stylistic/brace-style */

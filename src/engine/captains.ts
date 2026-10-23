@@ -131,14 +131,14 @@ function checkCaptain(team: Team,
 
     const atkBoosts = bullets.filter(bullet => /Boosts.*ATK/i.test(bullet));
     const unboostedUnits = calculateUnboostedUnits(team, captainIndex, atkBoosts);
-    for (let index of unboostedUnits)
+    for (const index of unboostedUnits)
         result.push({ index, issue: `Not boosted by ${ Html.decorateUnit(captain.id, captain.variant) }` });
 
-    const genericConditionals =  bullets.filter(bullet => GENERIC_CONDITIONAL_REGEX.test(bullet));
+    const genericConditionals = bullets.filter(bullet => GENERIC_CONDITIONAL_REGEX.test(bullet));
     if (genericConditionals.some(c => !isGenericConditionalMet(team, c)))
         result.push({ index: captainIndex, issue: 'Has unmet captain crew requirements' });
 
-    const typeConditionals =  bullets.filter(bullet => TYPE_CONDITIONAL_REGEX.test(bullet));
+    const typeConditionals = bullets.filter(bullet => TYPE_CONDITIONAL_REGEX.test(bullet));
     if (typeConditionals.some(c => !isTypeConditionalMet(team, c)))
         result.push({ index: captainIndex, issue: 'Has unmet captain crew requirements' });
 
@@ -149,7 +149,7 @@ function checkCaptain(team: Team,
 function calculateUnboostedUnits(team: Team,
                                  captainIndex: number,
                                  captainBullets: string[]): number[] {
-    return [ 5, 0, 4, 1, 3, 2]
+    return [ 5, 0, 4, 1, 3, 2 ]
         .filter(unitIndex => {
             const unit = team.units[unitIndex];
             return !!unit?.id && !isBoosted(team, unitIndex, captainIndex, captainBullets);
@@ -163,11 +163,11 @@ function isBoosted(team: Team,
 
     const unit = team.units[unitIndex]!;
 
-    for (let bullet of captainBullets) {
+    for (const bullet of captainBullets) {
         const matches = [ ...bullet.matchAll(/Boosts\s+([A-Z,\s]+?)\s+of\s+(.+?)\s+by\s+[\d?]/gi) ];
-        for (let match of matches) {
+        for (const match of matches) {
 
-            const [ _, stats, targets ] = match;
+            const [ , stats, targets ] = match;
             if (!/\bATK\b/i.test(stats)) continue;
 
             if (/^this characters?$/i.test(targets)) {
@@ -200,14 +200,14 @@ function isGenericConditionalMet(team: Team,
     const matches = bullet.match(GENERIC_CONDITIONAL_REGEX);
     if (!matches) return false;
 
-    const [ _, number, targets ] = matches;
+    const [ , number, targets ] = matches;
 
     const criteria = Criteria.parseCriteria(targets);
 
     const requiredNumber = parseInt(number, 10);
     const availableNumber = (team.units ?? [ ])
         .filter(u => u?.id)
-        .reduce((p,n) => p + (criteria(n!.id, n!.variant) ? 1 : 0), 0);
+        .reduce((p, n) => p + (criteria(n!.id, n!.variant) ? 1 : 0), 0);
 
     return (availableNumber >= requiredNumber);
 

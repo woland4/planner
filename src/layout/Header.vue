@@ -102,7 +102,6 @@
 
         </template>
 
-
         <template #right>
             <UButton icon="i-lucide-panel-right"
                      color="neutral"

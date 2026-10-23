@@ -30,7 +30,7 @@
         variant?: Nullable<number>;
         llbLevel?: Nullable<number>;
 
-        boost?: Nullable<number>,
+        boost?: Nullable<number>;
         popoverSide?: 'left' | 'right' | 'top' | 'bottom';
         popoverData?: Nullable<UnitPopoverData>;
 

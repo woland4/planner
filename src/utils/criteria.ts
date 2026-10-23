@@ -15,7 +15,7 @@ const TYPE_REGEX = /\[(STR|DEX|QCK|PSY|INT)]/gi;
 const CLASS_REGEX = /(?:Fighter|Slasher|Striker|Shooter|Free Spirit|Powerhouse|Cerebral|Driven)/gi;
 const TAG_REGEX = /\[((?!STR]|DEX]|QCK]|PSY]|INT])[^\]]+)]/gi;
 const SEPARATOR_REGEX = /(?:\s*,\s*|\s+)(?:and|or)\s+|\s*,\s*|:\s*/g;
-const LEFTOVERS_REGEX = /[\/\[\]]/g;
+const LEFTOVERS_REGEX = /[/[\]]/g;
 
 const OF_THE_FOLLOWING_REGEX = /(?:^|[.:]\s*)([^.:]*?)\s*\bof the following\b[^:]*:?\s*/i;
 const COST_FIX_REGEX = /\bcharacters?\s+with\s+(?:a\s+)?cost(?:\s+of)?\b/gi;
@@ -23,11 +23,11 @@ const COST_FIX_REGEX = /\bcharacters?\s+with\s+(?:a\s+)?cost(?:\s+of)?\b/gi;
 const COST_PATTERNS: CostPattern[] = [
     {
         regex: /cost (\d+) or less/i, // Cost N or less
-        ranges: m => [{ max: parseInt(m[1], 10) }]
+        ranges: m => [ { max: parseInt(m[1], 10) } ]
     },
     {
         regex: /cost (\d+) or (?:more|higher)/i, // Cost N or more/higher
-        ranges: m => [{ min: parseInt(m[1], 10) }]
+        ranges: m => [ { min: parseInt(m[1], 10) } ]
     },
     {
         regex: /cost (\d+) or (\d+) or less/i, // Cost N or M or less
@@ -45,18 +45,18 @@ const COST_PATTERNS: CostPattern[] = [
     },
     {
         regex: /cost (\d+)\s*-\s*(\d+)/i, // Cost N-M
-        ranges: m => [{ min: parseInt(m[1], 10), max: parseInt(m[2], 10) }]
+        ranges: m => [ { min: parseInt(m[1], 10), max: parseInt(m[2], 10) } ]
     },
     { // Keep this last
         regex: /cost (\d+)/i, // Cost N
-        ranges: m => [{ min: parseInt(m[1], 10), max: parseInt(m[1], 10) }]
+        ranges: m => [ { min: parseInt(m[1], 10), max: parseInt(m[1], 10) } ]
     }
 ];
 
-const FIXES: { regex: RegExp, replacement: string }[] = [
+const FIXES: { regex: RegExp; replacement: string }[] = [
     { regex: /Dr\. (Kureha)/i, replacement: '$1' },
     { regex: /Dr\. (Hiriluk)/i, replacement: '$1' }
-]
+];
 
 /*-----
   Types
@@ -66,7 +66,7 @@ export type CriteriaCheck = (unitID: number, variant: Nullable<number>) => boole
 
 type CostPattern = {
     regex: RegExp;
-    ranges: (m: RegExpMatchArray) => { min?: number, max?: number }[];
+    ranges: (m: RegExpMatchArray) => { min?: number; max?: number }[];
 };
 
 type ExtractedTerm = {
@@ -94,7 +94,7 @@ export const Criteria = {
         let sanitized = criteria
             .replace(ALIASES_REGEX, '')
             .replace(COST_FIX_REGEX, 'cost');
-        for (let fix of FIXES)
+        for (const fix of FIXES)
             sanitized = sanitized.replace(fix.regex, fix.replacement);
 
         const cost = parseCostCriteria(sanitized);
@@ -133,7 +133,7 @@ export const Criteria = {
 
     }
 
-}
+};
 
 /*---------
   Internals
@@ -142,7 +142,7 @@ export const Criteria = {
 // Criteria parse cache so we don't have to redo the parsing each time
 const criteriaCache = new Map<string, CriteriaCheck>();
 
-function parseCostCriteria(criteria: string): Nullable<{ check: CriteriaCheck, matched: string }> {
+function parseCostCriteria(criteria: string): Nullable<{ check: CriteriaCheck; matched: string }> {
 
     for (const pattern of COST_PATTERNS) {
 
@@ -150,7 +150,7 @@ function parseCostCriteria(criteria: string): Nullable<{ check: CriteriaCheck, m
         if (!match) continue;
 
         const ranges = pattern.ranges(match);
-        const check: CriteriaCheck = (unitID) => {
+        const check: CriteriaCheck = unitID => {
             const cost = Units.getCost(unitID);
             if (isNullish(cost)) return false;
             return ranges.some(r => cost >= (r.min ?? Number.MIN_SAFE_INTEGER) && cost <= (r.max ?? Number.MAX_SAFE_INTEGER));

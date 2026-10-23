@@ -17,7 +17,7 @@
       Constants
       ---------*/
 
-    const ACTIVATIONS: { key: Activation, badge: string }[] = [
+    const ACTIVATIONS: { key: Activation; badge: string }[] = [
         { key: 'preexisting', badge: 'bg-green-400 text-green-950' },
         { key: 'preemptive', badge: 'bg-blue-400 text-blue-950' },
         { key: 'death', badge: 'bg-amber-400 text-amber-950' },
@@ -29,8 +29,8 @@
       -----*/
 
     const props = defineProps<{
-        battle: Battle,
-        title?: Nullable<string>
+        battle: Battle;
+        title?: Nullable<string>;
     }>();
 
     /*--------
@@ -39,7 +39,7 @@
 
     const gimmickGroups = computed<Record<number, Record<Activation, Gimmick[]>>>(() => {
         const result: Record<number, Record<string, Gimmick[]>> = { };
-        for (let i=0; i<props.battle.stages?.length; ++i) {
+        for (let i = 0; i < props.battle.stages?.length; ++i) {
             const groups = groupBy(props.battle.stages[i]?.gimmicks ?? [ ], g => g.activation);
             if (!isEmpty(groups))
                 result[i] = groups;

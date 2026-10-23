@@ -45,7 +45,7 @@ function loadScript(src: string): Promise<void> {
         const script = document.createElement('script');
         script.src = src;
         script.addEventListener('load', () => resolve(), { once: true });
-        script.addEventListener('error', (e) => reject(e), { once: true });
+        script.addEventListener('error', e => reject(e), { once: true });
         document.head.appendChild(script);
     });
 }

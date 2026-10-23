@@ -22,7 +22,7 @@
       -----*/
 
     const props = defineProps<{
-        data?: Nullable<Battle>
+        data?: Nullable<Battle>;
     }>();
 
     /*-----
@@ -107,7 +107,6 @@
             enemies: (stage?.enemies ?? [ ]).map(Enemies.validateEnemy),
             gimmicks: (stage?.gimmicks ?? [ ]).map(Gimmicks.validateGimmick)
         }));
-
 
         validation.value = data as BattleValidation;
 

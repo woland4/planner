@@ -18,7 +18,7 @@
       -----*/
 
     const props = defineProps<{
-        boosters?: Nullable<Booster[]>
+        boosters?: Nullable<Booster[]>;
     }>();
 
     /*-----

@@ -10,7 +10,7 @@ export type TeamCompositionIssue = {
 
 export type GimmickChecker<T extends GimmickType = GimmickType> = {
     type: GimmickType;
-    check?: (data: GimmickCheckContext<T>) => Nullable<GimmickCheckResult>
+    check?: (data: GimmickCheckContext<T>) => Nullable<GimmickCheckResult>;
 };
 
 export type GimmickCheckContext<T extends GimmickType> = {

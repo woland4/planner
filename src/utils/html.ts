@@ -48,4 +48,4 @@ export const Html = {
             (_, clazz, text) => `<span class='${ clazz }'>${ text }</span>`);
     }
 
-}
+};

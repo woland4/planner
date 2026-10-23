@@ -19,7 +19,7 @@ export const useStore = defineStore('store', {
 
     state: () => ({
 
-        tabs: useStorage<Tab[]>('tabs', [{ ...createTab(), index: 0 }]),
+        tabs: useStorage<Tab[]>('tabs', [ { ...createTab(), index: 0 } ]),
         currentTabIndex: useStorage<number>('currentTab', 0),
 
         leftSidebarVisible: useResponsiveness().isDesktop.value,
@@ -34,7 +34,8 @@ export const useStore = defineStore('store', {
     actions: {
 
         reindexTabs(current?: Nullable<Tab>) {
-            for (let i=0; i<this.tabs.length; ++i) this.tabs[i].index = i;
+            for (let i = 0; i < this.tabs.length; ++i)
+                this.tabs[i].index = i;
             if (current) this.currentTabIndex = this.tabs.indexOf(current);
             else this.currentTabIndex = Math.min(this.currentTabIndex, this.tabs.length - 1);
         },
@@ -56,7 +57,7 @@ export const useStore = defineStore('store', {
             const clonedTab = clone(this.tabs[index]);
             this.tabs.splice(index + 1, 0, clonedTab);
 
-            for (let i=0; i<this.tabs.length; ++i)
+            for (let i = 0; i < this.tabs.length; ++i)
                 this.tabs[i].index = i;
 
             this.currentTabIndex = index + 1;
@@ -79,7 +80,7 @@ export const useStore = defineStore('store', {
                 return;
             }
 
-            for (let i=0; i<this.tabs.length; ++i)
+            for (let i = 0; i < this.tabs.length; ++i)
                 this.tabs[i].index = i;
 
             if (removingCurrent)
@@ -88,7 +89,6 @@ export const useStore = defineStore('store', {
                 this.currentTabIndex = currentTab?.index ?? -1;
 
         },
-
 
         closeTab(index: number) {
             this.closeTabs(index, index);
@@ -100,6 +100,5 @@ export const useStore = defineStore('store', {
         }
 
     }
-
 
 });

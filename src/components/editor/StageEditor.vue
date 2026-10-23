@@ -12,6 +12,7 @@
     import type { Stage } from '@/types/battles.ts';
     import type { StageValidation } from '@/types/validation.ts';
     import type { Nullable } from '@/types/utils.ts';
+    import type { Gimmick } from '@/types/gimmicks.ts';
 
     /*-------
       Options
@@ -30,9 +31,9 @@
       -----*/
 
     const props = defineProps<{
-        index: number,
-        collapsed: boolean,
-        validation?: Nullable<StageValidation>
+        index: number;
+        collapsed: boolean;
+        validation?: Nullable<StageValidation>;
     }>();
 
     /*-----
@@ -40,8 +41,8 @@
       -----*/
 
     const emit = defineEmits<{
-        toggle: [ index: number ],
-        remove: [ index: number ]
+        toggle: [ index: number ];
+        remove: [ index: number ];
     }>();
 
     /*-----------
@@ -71,10 +72,10 @@
         if (!model.value.gimmicks)
             model.value.gimmicks = [ ];
         if (!model.value.gimmicks[model.value.gimmicks.length - 1]?.activation)
-            model.value.gimmicks.push({ } as any);
+            model.value.gimmicks.push({ } as Gimmick);
         else {
             const last = model.value.gimmicks[model.value.gimmicks.length - 1];
-            const gimmick = { activation: last.activation } as any;
+            const gimmick: Gimmick = { activation: last.activation } as Gimmick;
             if (last.activation === 'interruption') gimmick.times = last.times;
             model.value.gimmicks.push(gimmick);
         }

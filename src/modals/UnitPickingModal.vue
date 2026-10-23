@@ -2,7 +2,7 @@
     import { computed, onMounted, ref, useTemplateRef } from 'vue';
     import { difference, intersection, isArray, isNullish, isString, sortBy, toTitleCase } from 'remeda';
     import { refDebounced, useSessionStorage, useStorage } from '@vueuse/core';
-    import { parse as parseQuery } from 'search-query-parser';
+    import { parse as parseQuery, type SearchParserResult } from 'search-query-parser';
 
     import UnitThumbnail from '@/components/UnitThumbnail.vue';
 
@@ -31,8 +31,8 @@
       -----*/
 
     type ListItem = {
-        id: number,
-        variant?: number
+        id: number;
+        variant?: number;
     };
 
     /*-----
@@ -41,18 +41,18 @@
 
     const props = defineProps<{
 
-        storageKey?: string
+        storageKey?: string;
 
-        boosters?: Nullable<Booster[]>,
+        boosters?: Nullable<Booster[]>;
 
-        exclude?: Nullable<number[]>,
-        multiple?: boolean,
-        noVariants?: boolean,
+        exclude?: Nullable<number[]>;
+        multiple?: boolean;
+        noVariants?: boolean;
 
-        supportedUnitID?: Nullable<number>,
-        supportedVariant?: Nullable<number>,
+        supportedUnitID?: Nullable<number>;
+        supportedVariant?: Nullable<number>;
 
-        disabledFamilies?: Nullable<string[]>
+        disabledFamilies?: Nullable<string[]>;
 
     }>();
 
@@ -128,12 +128,12 @@
             return allUnitIDs.value;
 
         let parsed = doParseQuery(debouncedQuery.value);
-        if (isString(parsed))  parsed = { text: parsed };
+        if (isString(parsed)) parsed = { text: parsed };
 
         let result = allUnitIDs.value;
 
         // Text filter
-        for (let token of (parsed?.text ?? '').split(/\s+/)) {
+        for (let token of ((parsed?.text ?? '') as string).split(/\s+/)) {
             if (!token.length) continue;
             const sanitized = token.toLowerCase();
             if (/^\d+$/.test(sanitized)) {
@@ -146,9 +146,9 @@
         // Type filter
         if (isString(parsed.type)) {
             const type = parsed.type.toUpperCase();
-            result = result.filter(({ id }) => Units.getTypes(id).includes(type));
+            result = result.filter(({ id }) => (Units.getTypes(id) as string[]).includes(type));
         } else if (isArray(parsed.type)) {
-            const types = parsed.type.map((t: string) => t.toUpperCase());
+            const types = (parsed.type as string[]).map((t: string) => t.toUpperCase());
             result = result.filter(({ id, variant }) => intersection(types, Units.getTypes(id, variant)).length > 0);
         }
 
@@ -157,7 +157,7 @@
             const clazz = sanitizeClassFilter(parsed.class);
             result = result.filter(({ id }) => Units.getClasses(id).includes(clazz as Class));
         } else if (isArray(parsed.class)) {
-            const classes = parsed.class.map((t: string) => sanitizeClassFilter(t));
+            const classes = (parsed.class as string[]).map((t: string) => sanitizeClassFilter(t));
             result = result.filter(({ id, variant }) => intersection(classes, Units.getClasses(id, variant)).length > 0);
         }
 
@@ -200,7 +200,9 @@
     const menuItems = computed<DropdownMenuItem[][]>(() => {
 
         const result: DropdownMenuItem[] = [ ];
-        const parsed = doParseQuery(query.value ?? '');
+
+        let parsed = doParseQuery(query.value ?? '');
+        if (isString(parsed)) parsed = { text: parsed };
 
         // Types
         if (isNullish(parsed.type) || isString(parsed.type) || (isArray(parsed.type) && parsed.type.length < 2)) {
@@ -272,7 +274,7 @@
                     makeFilterItem('Support', [ 'support', '*' ])
                 ]
             ]
-        })
+        });
 
         return [ result ];
 
@@ -294,17 +296,17 @@
       Methods
       -------*/
 
-    function makeFilterItem(label: string, filter: string[]): DropdownMenuItem
+    function makeFilterItem(label: string, filter: string[]): DropdownMenuItem;
     function makeFilterItem(label: string, ...rest: [string, string[]] | [string[]]): DropdownMenuItem {
         const [ icon, filter ] = (rest.length === 2 ? rest : [ null, rest[0] ]);
-        if (icon) return { label, icon, onSelect: (e) => onAddFilter(e, filter[0], filter[1]) };
-        else return { label, onSelect: (e) => onAddFilter(e, filter[0], filter[1]) };
+        if (icon) return { label, icon, onSelect: e => onAddFilter(e, filter[0], filter[1]) };
+        else return { label, onSelect: e => onAddFilter(e, filter[0], filter[1]) };
     }
 
     function onAddFilter(e: Event, prefix: string, value: string) {
 
         const sanitized = (value.includes(' ') || value === '*' ? `"${ value.replace('*', '') }"` : value);
-        query.value = `${ query.value } ${ prefix }:${ sanitized }`.trim()
+        query.value = `${ query.value } ${ prefix }:${ sanitized }`.trim();
 
         if (value !== '*') {
             e.preventDefault();
@@ -321,7 +323,7 @@
 
     }
 
-    function doParseQuery(value: string): any {
+    function doParseQuery(value: string): string | SearchParserResult {
         return parseQuery(value, {
             keywords: [ 'type', 'class', 'rarity', 'tag', 'captain', 'special', 'support' ]
         });

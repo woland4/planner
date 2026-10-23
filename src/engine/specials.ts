@@ -75,7 +75,7 @@ const LIST_FORMATTER = new Intl.ListFormat('en', { style: 'long', type: 'conjunc
 
 export function checkSpecialIssues(team: Nullable<Team>): TeamCompositionIssue[] {
     if (!team?.units?.length) return [ ];
-    return unique([ 5, 0, 4, 1, 3, 2]
+    return unique([ 5, 0, 4, 1, 3, 2 ]
         .map(n => checkSpecial(team, n))
         .flat()
         .filter(i => !isNullish(i)));
@@ -116,14 +116,14 @@ function checkSpecial(team: Team,
     const buffer: Map<number, string[]> = new Map();
     for (const [ buff, targets ] of groupedBuffs) {
         const unboostedUnits = calculateUnboostedUnits(team, unitIndex, targets);
-        for (let index of unboostedUnits) {
+        for (const index of unboostedUnits) {
             if (!buffer.has(index)) buffer.set(index, [ buff ]);
             else buffer.get(index)!.push(buff);
         }
     }
 
     const result: TeamCompositionIssue[] = [ ];
-    for (let entry of buffer.entries()) {
+    for (const entry of buffer.entries()) {
         const [ index, buffs ] = entry;
         result.push({
             index,
@@ -138,7 +138,7 @@ function checkSpecial(team: Team,
 function calculateUnboostedUnits(team: Team,
                                  launcherIndex: number,
                                  targets: string[]): number[] {
-    return [ 5, 0, 4, 1, 3, 2]
+    return [ 5, 0, 4, 1, 3, 2 ]
         .filter(unitIndex => {
             const unit = team.units[unitIndex];
             return !!unit?.id && !isBoosted(team, unitIndex, launcherIndex, targets);

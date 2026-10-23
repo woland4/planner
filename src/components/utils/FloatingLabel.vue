@@ -10,8 +10,8 @@
       -----*/
 
     const props = defineProps<{
-        label: string
-        required?: boolean
+        label: string;
+        required?: boolean;
     }>();
 </script>
 

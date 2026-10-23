@@ -65,7 +65,7 @@
         try {
             const data = JSON.parse(await file.text());
             store.currentTab.battle = Battles.sanitizeBattle(data);
-        } catch (_) {
+        } catch {
             alert('Upload failed');
         }
 

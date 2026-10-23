@@ -54,7 +54,6 @@ export const Export = {
         options.NumberListAlignment = NumberListAlignment.Left;
         options.TableCommaPlacement = TableCommaPlacement.BeforePadding;
 
-
         const formatter = new Formatter();
         formatter.Options = options;
 
@@ -115,7 +114,7 @@ export const Export = {
         }
 
         // Team
-        for (let i=0; i<6; ++i) {
+        for (let i = 0; i < 6; ++i) {
 
             const unitX = (i > 2 ? PADDING : PADDING + TEAM_MAIN_UNIT_SIZE + GAP);
 
@@ -167,7 +166,7 @@ export const Export = {
 
         }
 
-        return new Promise<Blob>(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
+        return new Promise<Blob>(resolve => canvas.toBlob(b => resolve(b!), 'image/png'));
 
     },
 
@@ -194,7 +193,7 @@ export const Export = {
 
         const canvasWidth = boxWidth + PADDING * 2;
         const canvasHeight = (
-            boxHeights.reduce((p,n) => p + n, 0) +
+            boxHeights.reduce((p, n) => p + n, 0) +
             PADDING * 2 +
             GAP * (groups.length - 1)
         );
@@ -219,7 +218,7 @@ export const Export = {
 
         let y = PADDING;
 
-        for (let i=0; i<groups.length; ++i) {
+        for (let i = 0; i < groups.length; ++i) {
 
             // Group box
             drawBox({
@@ -255,7 +254,7 @@ export const Export = {
             }
 
             // Group units
-            for (let n=0; n<groups[i].ids.length; ++n) {
+            for (let n = 0; n < groups[i].ids.length; ++n) {
                 await drawImage({
                     context,
                     src: Units.getThumbnailURL(groups[i].ids[n]),
@@ -271,7 +270,7 @@ export const Export = {
 
         }
 
-        return new Promise<Blob>(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
+        return new Promise<Blob>(resolve => canvas.toBlob(b => resolve(b!), 'image/png'));
 
     },
 
@@ -302,7 +301,7 @@ export const Export = {
 
             const context = canvas.getContext('2d')!;
 
-            for (let offset=0; offset<height; offset+=BATTLE_SLICE_HEIGHT) {
+            for (let offset = 0; offset < height; offset += BATTLE_SLICE_HEIGHT) {
 
                 const slice = await toCanvas(view, {
                     width,
@@ -320,7 +319,7 @@ export const Export = {
 
             }
 
-            return new Promise<Blob>(resolve => canvas.toBlob(b => resolve(b!), 'image/png'))
+            return new Promise<Blob>(resolve => canvas.toBlob(b => resolve(b!), 'image/png'));
 
         } finally {
             app.unmount();
@@ -329,7 +328,7 @@ export const Export = {
 
     }
 
-}
+};
 
 /*-------
   Helpers

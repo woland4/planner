@@ -1,11 +1,10 @@
 <script setup lang="ts">
     import { computed } from 'vue';
-    import { isFunction, isNullish, sortBy, values } from 'remeda';
+    import { isNullish, sortBy, values } from 'remeda';
 
     import FloatingLabel from '@/components/utils/FloatingLabel.vue';
     import BasicSelect from '@/components/utils/BasicSelect.vue';
 
-    import { GimmickRegistry } from '@/utils/registry.ts';
     import { Gimmicks } from '@/utils/gimmicks.ts';
     import { Enums } from '@/utils/enums.js';
     import { I18N } from '@/utils/i18n.ts';
@@ -20,20 +19,17 @@
       ---------*/
 
     const TARGET_ITEMS = [
-        ...Enums.types,
-        { type: 'separator' },
-        ...Enums.classes,
-        { type: 'separator' },
-        ...Enums.positions,
-        { type: 'separator' },
-        ...values(Enums.tags).flat()
-    ].map((v: any) => v.type ? v : ({ value: v, label: I18N.position(v as Position) ?? v }));
+        Enums.types.map(value => ({ value, label: value })),
+        Enums.classes.map(value => ({ value, label: value })),
+        Enums.positions.map(value => ({ value, label: I18N.position(value as Position) ?? value })),
+        values(Enums.tags).flat().map(value => ({ value, label: value }))
+    ];
 
     const INTIMIDATION_ITEMS = Enums.intimidations.map(value => ({ value, label: I18N.intimidation(value) }));
 
     const INTERRUPTION_ITEMS = Enums.interruptions.map(value => ({ value, label: I18N.interruption(value) }));
 
-    const TYPE_OPTIONS = sortBy<GimmickType[]>(Enums.gimmickTypes, (t) => getTypeLabel(t));
+    const TYPE_OPTIONS = sortBy<GimmickType[]>(Enums.gimmickTypes, t => getTypeLabel(t));
 
     /*-------
       Options
@@ -46,7 +42,7 @@
       -----*/
 
     const props = defineProps<{
-        validation: Nullable<GimmickIssues>
+        validation: Nullable<GimmickIssues>;
     }>();
 
     /*-----
@@ -54,8 +50,8 @@
       -----*/
 
     const emit = defineEmits<{
-        remove: [ ],
-        tab: [ e: Event ]
+        remove: [ ];
+        tab: [ e: Event ];
     }>();
 
     /*-----
@@ -69,18 +65,18 @@
       --------*/
 
     // Used for the additional fields to avoid typing headaches
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const draft = computed(() => model.value as Record<string, any>);
 
-    const details = computed(() => Gimmicks.getGimmickDetails(model.value?.type));
+    const details = computed(() => model.value?.type ? Gimmicks.getGimmickData(model.value?.type) : null);
+    const fields = computed(() => Gimmicks.getGimmickFields(model.value?.type));
 
     /*-------
       Methods
       -------*/
 
     function getTypeLabel(type: GimmickType): string {
-        const label = GimmickRegistry[type]?.label;
-        if (isFunction(label)) return label({ } as any);
-        else return label;
+        return Gimmicks.getGimmickLabel({ type } as Gimmick) ?? type;
     }
 
     function onTypeUpdated() {
@@ -98,11 +94,11 @@
     }
 
     function isVisible(field: string): boolean {
-        return details.value?.fields?.[field]?.visible?.(model.value) ?? true;
+        return Gimmicks.getGimmickField(model.value?.type, field)?.visible?.(model.value) ?? true;
     }
 
     function isDisabled(field: string): boolean {
-        return details.value?.fields?.[field]?.disabled?.(model.value) ?? false;
+        return Gimmicks.getGimmickField(model.value?.type, field)?.disabled?.(model.value) ?? false;
     }
 </script>
 
@@ -204,8 +200,8 @@
 
                 <!-- Additional Fields -->
 
-                <template v-if="details?.fields">
-                    <template v-for="(data, key) in details.fields"
+                <template v-if="fields">
+                    <template v-for="(data, key) in fields"
                               :key="key">
                         <FloatingLabel v-if="isVisible(key)"
                                        :label="data.label"

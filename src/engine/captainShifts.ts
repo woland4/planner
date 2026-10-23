@@ -47,7 +47,7 @@ function checkCaptainShift(unit: Nullable<TeamUnit>,
     const matches = condition.match(/is your (middle|bottom).(left|right)/);
     if (!matches) return null;
 
-    const [ _, row, column ] = matches;
+    const [ , row, column ] = matches;
     let requiredIndex;
     if (row === 'middle') requiredIndex = column === 'left' ? 4 : 1;
     else requiredIndex = column === 'left' ? 3 : 2;

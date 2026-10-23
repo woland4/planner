@@ -6,6 +6,7 @@
 
     import { I18N } from '@/utils/i18n.ts';
 
+    import type { BadgeProps } from '@nuxt/ui';
     import type { Battle } from '@/types/battles.ts';
     import type { Gimmick } from '@/types/gimmicks.ts';
     import type { Activation } from '@/types/enums.ts';
@@ -14,7 +15,7 @@
       Constants
       ---------*/
 
-    const ACTIVATIONS: { key: Activation, badge: any }[] = [
+    const ACTIVATIONS: { key: Activation; badge: BadgeProps['color'] }[] = [
         { key: 'preexisting', badge: 'success' },
         { key: 'preemptive', badge: 'info' },
         { key: 'death', badge: 'warning' },
@@ -32,7 +33,7 @@
       -----*/
 
     const props = defineProps<{
-        battle: Battle
+        battle: Battle;
     }>();
 
     /*--------
@@ -41,13 +42,13 @@
 
     const gimmickGroups = computed<Record<number, Record<Activation, Gimmick[]>>>(() => {
         const result: Record<number, Record<string, Gimmick[]>> = { };
-        for (let i=0; i<props.battle.stages?.length; ++i) {
+        for (let i = 0; i < props.battle.stages?.length; ++i) {
             const groups = groupBy(props.battle.stages[i]?.gimmicks ?? [ ], g => g.activation);
             if (!isEmpty(groups))
                 result[i] = groups;
         }
         return result;
-    })
+    });
 </script>
 
 <template>
